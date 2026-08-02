@@ -199,30 +199,32 @@ function loadState() {
     try {
         const raw = localStorage.getItem(STORAGE_KEY);
 
-        if (raw) {
-            const parsed = JSON.parse(raw);
-            let queues = null;
-            let settings = null;
+        if (!raw) {
+            return { queues: [], settings: { ...DEFAULT_SETTINGS } };
+        }
 
-            if (Array.isArray(parsed)) {
-                // v1 snapshot: bare queues array.
-                queues = parsed;
-                settings = { ...DEFAULT_SETTINGS };
-            } else if (parsed && Array.isArray(parsed.queues)) {
-                queues = parsed.queues;
-                settings = { ...DEFAULT_SETTINGS, ...(parsed.settings ?? {}) };
+        const parsed = JSON.parse(raw);
+        let queues = null;
+        let settings = null;
+
+        if (Array.isArray(parsed)) {
+            // v1 snapshot: bare queues array.
+            queues = parsed;
+            settings = { ...DEFAULT_SETTINGS };
+        } else if (parsed && typeof parsed === 'object' && Array.isArray(parsed.queues)) {
+            queues = parsed.queues;
+            settings = { ...DEFAULT_SETTINGS, ...(parsed.settings ?? {}) };
+        }
+
+        if (Array.isArray(queues)) {
+            // Skip any corrupt entries so a stale snapshot never crashes the app.
+            const validQueues = queues.filter((queue) => queue && typeof queue === 'object');
+
+            for (const queue of validQueues) {
+                normalizeQueue(queue);
             }
 
-            if (queues) {
-                // Skip any corrupt entries so a stale snapshot never crashes the app.
-                const validQueues = queues.filter((queue) => queue && typeof queue === 'object');
-
-                for (const queue of validQueues) {
-                    normalizeQueue(queue);
-                }
-
-                return { queues: validQueues, settings: settings ?? { ...DEFAULT_SETTINGS } };
-            }
+            return { queues: validQueues, settings: settings ?? { ...DEFAULT_SETTINGS } };
         }
     } catch {
         // Corrupt or unavailable storage — start fresh.

@@ -13,11 +13,7 @@ app.use(router);
 const auth = useAuthStore();
 
 if (localStorage.getItem('auth_token')) {
-    auth.ensureSession().then(() => {
-        if (auth.isAdmin && router.currentRoute.value.path === '/play') {
-            router.replace('/admin');
-        }
-    });
+    auth.ensureSession();
 }
 
 app.mount('#app');
