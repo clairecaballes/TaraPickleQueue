@@ -15,8 +15,8 @@ import { useAuthStore } from '../stores/auth';
 const routes = [
     {
         path: '/',
-        name: 'landing',
-        component: () => import('../views/LandingView.vue'),
+        name: 'play',
+        component: () => import('../views/TaraPickleDashboard.vue'),
     },
     {
         path: '/play',
