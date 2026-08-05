@@ -234,7 +234,7 @@ function loadState() {
 }
 
 /**
- * TaraPickle — open-access, single-page court queue management.
+ * Pickle Ta Bai! — open-access, single-page court queue management.
  *
  * Everything lives client-side (Pinia + localStorage), so any visitor can
  * create sessions, add guest players, run multiple courts at once, score

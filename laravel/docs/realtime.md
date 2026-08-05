@@ -1,4 +1,4 @@
-# TaraPickle — Real-Time Engine (Laravel Reverb)
+# Pickle Ta Bai! — Real-Time Engine (Laravel Reverb)
 
 The queue engine pushes live updates over WebSockets with **Laravel Reverb**
 (first-party, self-hosted, Pusher-protocol compatible). Clients subscribe with

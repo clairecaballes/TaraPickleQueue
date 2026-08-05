@@ -6,7 +6,7 @@
 export function playSummon() {
     try {
         if ('Notification' in window && Notification.permission === 'granted') {
-            new Notification('TaraPickle', {
+            new Notification('Pickle Ta Bai!', {
                 body: 'You’re up! Head to the court.',
                 icon: '/favicon.ico',
             });

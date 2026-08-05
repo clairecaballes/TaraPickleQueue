@@ -192,7 +192,7 @@ async function submit() {
         </div>
 
         <footer class="absolute bottom-4 left-0 right-0 text-center">
-            <p class="text-xs font-bold tracking-wide text-charcoal-400">Tara Pickle by Claire</p>
+            <p class="text-xs font-bold tracking-wide text-charcoal-400">Pickle Ta Bai! by Claire</p>
         </footer>
     </div>
 </template>

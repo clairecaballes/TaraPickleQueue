@@ -1,4 +1,4 @@
-# TaraPickle — Authentication & API Scaffold
+# Pickle Ta Bai! — Authentication & API Scaffold
 
 Stack: **Laravel 11** API + **Laravel Sanctum** (token-based, Bearer)
 

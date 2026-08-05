@@ -57,7 +57,7 @@ const quickTips = [
 </script>
 
 <template>
-    <BaseModal :model-value="modelValue" title="How to use TaraPickle" max-width="max-w-2xl" @update:model-value="$emit('update:modelValue', $event)">
+    <BaseModal :model-value="modelValue" title="How to use Pickle Ta Bai!" max-width="max-w-2xl" @update:model-value="$emit('update:modelValue', $event)">
         <p class="mb-5 text-sm text-charcoal-300">
             Fair queues, live courts and cute critters — here's the whole flow in a minute.
         </p>

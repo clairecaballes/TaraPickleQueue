@@ -62,7 +62,7 @@ function exportCsv() {
         ]),
     );
 
-    downloadBlob(new Blob([csv], { type: 'text/csv;charset=utf-8' }), 'tarapickle-results.csv');
+    downloadBlob(new Blob([csv], { type: 'text/csv;charset=utf-8' }), 'pickle-ta-bai-results.csv');
     emit('toast', 'Results downloaded as CSV 🎉');
 }
 
@@ -134,7 +134,7 @@ function exportPng() {
     // Title
     ctx.fillStyle = '#ffffff';
     ctx.font = "900 42px 'Bungee', 'Instrument Sans', sans-serif";
-    ctx.fillText('Tara Pickle', 56, 84);
+    ctx.fillText('Pickle Ta Bai!', 56, 84);
     ctx.fillStyle = '#ffd60a';
     ctx.fillText('Results', 56, 130);
 
@@ -196,9 +196,9 @@ function exportPng() {
     ctx.fillStyle = '#6f6f7a';
     ctx.font = '500 14px "Instrument Sans", sans-serif';
     ctx.textAlign = 'left';
-    ctx.fillText('Tara Pickle by Claire  ·  fair queues, cute critters, live stats', 56, height - 52);
+    ctx.fillText('Pickle Ta Bai! by Claire  ·  fair queues, cute critters, live stats', 56, height - 52);
 
-    downloadDataUrl(canvas.toDataURL('image/png'), 'tarapickle-results.png');
+    downloadDataUrl(canvas.toDataURL('image/png'), 'pickle-ta-bai-results.png');
     emit('toast', 'Results downloaded as PNG 🎉');
 }
 
@@ -231,11 +231,11 @@ async function shareResults() {
         .slice(0, 3)
         .map((row) => `${row.rank}. ${row.name} — ${row.wins} win${row.wins === 1 ? '' : 's'}`)
         .join('\n');
-    const text = `Tara Pickle results 🏆\n${podium}\n\n${rows.value.length} players · ${totalMatches.value} games`;
+    const text = `Pickle Ta Bai! results 🏆\n${podium}\n\n${rows.value.length} players · ${totalMatches.value} games`;
 
     if (navigator.share) {
         try {
-            await navigator.share({ title: 'Tara Pickle results', text, url: window.location.href });
+            await navigator.share({ title: 'Pickle Ta Bai! results', text, url: window.location.href });
 
             return;
         } catch {

@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
-| API Routes — TaraPickle
+| API Routes — Pickle Ta Bai!
 |--------------------------------------------------------------------------
 |
 | Public:      POST /api/auth/register, POST /api/auth/login

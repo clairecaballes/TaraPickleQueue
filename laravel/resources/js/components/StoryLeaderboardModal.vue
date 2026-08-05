@@ -10,6 +10,11 @@ import BaseModal from './ui/BaseModal.vue';
  * 9:16 (1080×1920) leaderboard story card, exportable as a PNG via
  * html-to-image. Rows show Rank, Player, Wins and W/L% — no skill columns —
  * with a shareable header banner, timestamp and social CTA.
+ *
+ * Design language: dark glassmorphism backdrops punched up with crisp white
+ * graphic lines — white corner brackets, white-outline rank badges, white
+ * divider rules and high-contrast type — so the card pops when posted to an
+ * Instagram Story.
  */
 const props = defineProps({
     modelValue: Boolean,
@@ -42,8 +47,30 @@ function rankColor(rank) {
     return '#8b8b95';
 }
 
+/**
+ * Rank badge: the podium keeps its volt/silver/bronze fill but every badge
+ * gains a sharp white outline ring so ranks read instantly against the dark
+ * glass card — white-outline aesthetic for the rest of the field.
+ */
+function rankBadgeStyle(rank) {
+    const podium = rank <= 3;
+
+    return {
+        width: '84px',
+        height: '84px',
+        fontFamily: 'Bungee, sans-serif',
+        fontSize: '40px',
+        color: podium ? '#0b1426' : '#ffffff',
+        background: podium ? rankColor(rank) : 'transparent',
+        border: '4px solid #ffffff',
+        boxShadow: podium ? '0 0 0 5px rgb(255 255 255 / 0.22)' : '0 0 0 5px rgb(255 255 255 / 0.1)',
+    };
+}
+
 const cardRef = ref(null);
 const exporting = ref(false);
+
+const FILE_NAME = 'pickle-ta-bai-story-leaderboard.png';
 
 async function exportPng() {
     if (!cardRef.value || exporting.value) {
@@ -63,7 +90,7 @@ async function exportPng() {
             cacheBust: true,
         });
 
-        downloadDataUrl(dataUrl, 'tarapickle-story-leaderboard.png');
+        downloadDataUrl(dataUrl, FILE_NAME);
         emit('toast', 'Story leaderboard downloaded as PNG 🎉');
     } catch {
         emit('toast', 'Could not export the story card in this browser.');
@@ -89,19 +116,19 @@ async function shareStory() {
         });
 
         const blob = await (await fetch(dataUrl)).blob();
-        const file = new File([blob], 'tarapickle-story-leaderboard.png', { type: 'image/png' });
+        const file = new File([blob], FILE_NAME, { type: 'image/png' });
 
         if (navigator.canShare?.({ files: [file] })) {
             await navigator.share({
                 files: [file],
-                title: 'Tara Pickle — Court Leaderboard',
+                title: 'Pickle Ta Bai! — Court Leaderboard',
                 text: `${props.title} 🏆 ${cardRows.value.length} ranked · ${props.totalMatches} games played`,
             });
 
             return;
         }
 
-        downloadDataUrl(dataUrl, 'tarapickle-story-leaderboard.png');
+        downloadDataUrl(dataUrl, FILE_NAME);
         emit('toast', 'Sharing unsupported here — story downloaded instead 🎉');
     } catch (err) {
         if (err?.name !== 'AbortError') {
@@ -122,7 +149,8 @@ async function shareStory() {
     >
         <p class="mb-4 text-sm text-charcoal-300">
             9:16 story card, sized for Instagram — download the PNG or share it straight from your phone.
-            Shows rank, wins and win rate; skill ratings are left off for a clean social look.
+            Shows rank, wins and win rate; skill ratings are left off for a clean social look. Crisp white
+            line accents keep the standings sharp when posted.
         </p>
 
         <!-- Preview — the real card is 1080×1920, scaled 0.25× for the modal -->
@@ -133,18 +161,46 @@ async function shareStory() {
             >
                 <div
                     ref="cardRef"
-                    class="story-card flex flex-col overflow-hidden"
+                    class="story-card relative flex flex-col overflow-hidden"
                     style="width: 1080px; height: 1920px; transform: scale(0.25); transform-origin: top left"
                 >
+                    <!-- White graphic corner brackets -->
+                    <div
+                        class="absolute"
+                        style="top: 36px; left: 36px; width: 110px; height: 110px; border-top: 4px solid rgb(255 255 255 / 0.9); border-left: 4px solid rgb(255 255 255 / 0.9); border-top-left-radius: 26px"
+                    />
+                    <div
+                        class="absolute"
+                        style="top: 36px; right: 36px; width: 110px; height: 110px; border-top: 4px solid rgb(255 255 255 / 0.9); border-right: 4px solid rgb(255 255 255 / 0.9); border-top-right-radius: 26px"
+                    />
+                    <div
+                        class="absolute"
+                        style="bottom: 36px; left: 36px; width: 110px; height: 110px; border-bottom: 4px solid rgb(255 255 255 / 0.9); border-left: 4px solid rgb(255 255 255 / 0.9); border-bottom-left-radius: 26px"
+                    />
+                    <div
+                        class="absolute"
+                        style="bottom: 36px; right: 36px; width: 110px; height: 110px; border-bottom: 4px solid rgb(255 255 255 / 0.9); border-right: 4px solid rgb(255 255 255 / 0.9); border-bottom-right-radius: 26px"
+                    />
+
                     <!-- Brand header (shrink-0 so rows get the flexible space) -->
                     <div
-                        class="flex shrink-0 flex-col items-center"
-                        style="padding: 84px 80px 0; background: linear-gradient(180deg, #12203a 0%, #0b1426 100%)"
+                        class="relative flex shrink-0 flex-col items-center"
+                        style="padding: 96px 80px 0; background: linear-gradient(180deg, #152238 0%, #0b1426 100%)"
                     >
-                        <div class="flex items-center gap-6">
+                        <!-- White court-line motif: center line + service circle -->
+                        <div
+                            class="absolute"
+                            style="left: 50%; top: 40px; width: 2px; height: 150px; background: linear-gradient(180deg, rgb(255 255 255 / 0.5), rgb(255 255 255 / 0.06)); transform: translateX(-50%)"
+                        />
+                        <div
+                            class="absolute"
+                            style="left: 50%; top: 115px; width: 96px; height: 96px; border-radius: 999px; border: 3px solid rgb(255 255 255 / 0.22); transform: translate(-50%, -50%)"
+                        />
+
+                        <div class="relative flex items-center gap-6">
                             <div
-                                class="grid place-items-center rounded-2xl"
-                                style="width: 96px; height: 96px; background: #ffd60a"
+                                class="grid shrink-0 place-items-center rounded-2xl"
+                                style="width: 96px; height: 96px; background: #ffd60a; border: 4px solid #ffffff; box-shadow: 0 0 0 5px rgb(255 255 255 / 0.18)"
                             >
                                 <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="#0b1426" stroke-width="2">
                                     <circle cx="8" cy="6" r="3" />
@@ -154,24 +210,27 @@ async function shareStory() {
                                 </svg>
                             </div>
                             <div>
-                                <p style="color: #ffffff; font-family: Bungee, sans-serif; font-size: 64px; line-height: 1.1; letter-spacing: -0.01em">
-                                    Tara<span style="color: #ffd60a">Pickle</span>
+                                <p style="color: #ffffff; font-family: Bungee, sans-serif; font-size: 58px; line-height: 1.08; letter-spacing: -0.01em">
+                                    Pickle Ta <span style="color: #ffd60a">Bai!</span>
                                 </p>
-                                <p style="color: #8b8b95; font-size: 26px; font-weight: 600; margin-top: 8px">
-                                    Fair queues · cute critters · live stats
+                                <div
+                                    style="height: 6px; width: 100%; border-radius: 999px; background: linear-gradient(90deg, #ffd60a 0%, rgb(255 255 255 / 0.25) 100%); margin-top: 10px"
+                                />
+                                <p style="color: #c6c9d4; font-size: 24px; font-weight: 600; margin-top: 12px">
+                                    Fair queues · live stats · cute critters
                                 </p>
                             </div>
                         </div>
 
-                        <!-- Banner -->
+                        <!-- Banner — dark glass + sharp white border -->
                         <div
-                            class="mt-14 w-full rounded-3xl border"
-                            style="border-color: rgb(255 214 10 / 0.5); background: rgb(255 214 10 / 0.1); padding: 34px 40px"
+                            class="mt-12 w-full rounded-3xl"
+                            style="border: 3px solid rgb(255 255 255 / 0.85); background: linear-gradient(180deg, rgb(255 255 255 / 0.08), rgb(255 255 255 / 0.03)); padding: 28px 40px"
                         >
-                            <p style="color: #ffffff; font-family: Bungee, sans-serif; font-size: 76px; line-height: 1.08">
+                            <p style="color: #ffffff; font-family: Bungee, sans-serif; font-size: 72px; line-height: 1.08">
                                 {{ title }}
                             </p>
-                            <p style="color: #ffd60a; font-size: 30px; font-weight: 800; margin-top: 14px">
+                            <p style="color: #ffffff; font-size: 28px; font-weight: 800; margin-top: 12px">
                                 {{ dateLabel }} · {{ cardRows.length }} ranked · {{ totalMatches }} games
                             </p>
                         </div>
@@ -180,37 +239,34 @@ async function shareStory() {
                     <!-- Rows (flex-1 spreads them across the 9:16 canvas) -->
                     <div
                         class="flex min-h-0 flex-1 flex-col justify-between"
-                        style="background: #0b1426; padding: 0 80px"
+                        style="background: linear-gradient(180deg, #0b1426 0%, #0e1931 100%); padding: 0 80px"
                     >
                         <div
                             v-for="row in cardRows"
                             :key="`${row.queueId}-${row.id}`"
                             class="flex items-center gap-8"
-                            style="border-bottom: 2px solid rgb(255 255 255 / 0.08); padding: 22px 0"
+                            style="border-bottom: 3px solid rgb(255 255 255 / 0.22); padding: 20px 0"
                         >
-                            <span
-                                class="grid shrink-0 place-items-center rounded-full"
-                                :style="{ width: '84px', height: '84px', fontFamily: 'Bungee, sans-serif', fontSize: '40px', color: '#0b1426', background: rankColor(row.rank) }"
-                            >
+                            <span class="grid shrink-0 place-items-center rounded-full" :style="rankBadgeStyle(row.rank)">
                                 {{ row.rank }}
                             </span>
                             <span
-                                class="grid place-items-center rounded-full"
-                                style="width: 84px; height: 84px; flex-shrink: 0; font-size: 44px; background: rgb(255 255 255 / 0.08)"
+                                class="grid shrink-0 place-items-center rounded-full"
+                                style="width: 84px; height: 84px; font-size: 42px; background: rgb(255 255 255 / 0.08); border: 3px solid rgb(255 255 255 / 0.85)"
                             >
                                 {{ row.avatarEmoji ?? '🐾' }}
                             </span>
                             <div class="min-w-0 flex-1">
-                                <p style="color: #ffffff; font-size: 44px; font-weight: 800; line-height: 1.15; overflow-wrap: anywhere">
+                                <p style="color: #ffffff; font-size: 42px; font-weight: 800; line-height: 1.15; overflow-wrap: anywhere">
                                     {{ row.name }}
                                 </p>
                             </div>
                             <div class="text-right" style="flex-shrink: 0">
-                                <p style="color: #ffd60a; font-family: Bungee, sans-serif; font-size: 46px; line-height: 1">
+                                <p style="color: #ffffff; font-family: Bungee, sans-serif; font-size: 44px; line-height: 1">
                                     {{ row.wins }}
-                                    <span style="color: #8b8b95; font-family: 'Instrument Sans', sans-serif; font-size: 26px; font-weight: 700">W</span>
+                                    <span style="color: #b8becb; font-family: 'Instrument Sans', sans-serif; font-size: 24px; font-weight: 700">W</span>
                                 </p>
-                                <p style="color: #b1b1b8; font-size: 28px; font-weight: 700; margin-top: 8px">
+                                <p style="color: #d4d8e0; font-size: 26px; font-weight: 700; margin-top: 8px">
                                     {{ winRate(row) }}% W/L
                                 </p>
                             </div>
@@ -220,19 +276,19 @@ async function shareStory() {
                     <!-- Social CTA + footer (shrink-0) -->
                     <div
                         class="flex shrink-0 flex-col items-center"
-                        style="background: #0b1426; padding: 44px 80px 52px"
+                        style="background: #0b1426; padding: 40px 80px 60px"
                     >
                         <div
                             class="flex items-center gap-6 rounded-full"
-                            style="background: #ffd60a; padding: 26px 52px"
+                            style="border: 3px solid #ffffff; background: rgb(255 255 255 / 0.04); padding: 22px 48px"
                         >
-                            <span style="color: #0b1426; font-size: 34px; font-weight: 900">Follow @tarapickle</span>
-                            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#0b1426" stroke-width="2.5">
+                            <span style="color: #ffffff; font-size: 32px; font-weight: 900">Follow @pickletabai</span>
+                            <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#ffd60a" stroke-width="2.5">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14m0 0l-5-5m5 5l-5 5" />
                             </svg>
                         </div>
-                        <p style="color: #6f6f7a; font-size: 26px; font-weight: 600; margin-top: 28px">
-                            Tara Pickle by Claire · fair queues, cute critters, live stats
+                        <p style="color: #8b93a3; font-size: 24px; font-weight: 600; margin-top: 26px">
+                            Pickle Ta Bai! by Claire · fair queues, live stats
                         </p>
                     </div>
                 </div>

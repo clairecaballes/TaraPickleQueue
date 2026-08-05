@@ -8,6 +8,7 @@ import AvatarPickerModal from './AvatarPickerModal.vue';
 import CourtPanel from './CourtPanel.vue';
 import PlayerFace from './PlayerFace.vue';
 import QueueShareModal from './QueueShareModal.vue';
+import SkillChip from './ui/SkillChip.vue';
 import Badge from './ui/Badge.vue';
 import BaseButton from './ui/BaseButton.vue';
 import BaseModal from './ui/BaseModal.vue';
@@ -79,6 +80,14 @@ const createdLabel = computed(() => {
         minute: '2-digit',
     })}`;
 });
+
+/** Which waiting player's compact action menu is open (mobile kebab). */
+const menuOpenId = ref(null);
+
+/** Short skill label for the compact mobile card (e.g. "Intermediate"). */
+function skillLabel(value) {
+    return SKILLS.find((skill) => skill.value === value)?.label ?? '';
+}
 
 function winRate(player) {
     return player.gamesPlayed ? Math.round((player.wins / player.gamesPlayed) * 100) : 0;
@@ -247,10 +256,33 @@ const confirmingDelete = ref(false);
                         {{ queue.name }}
                         <Badge v-if="!queue.open" color="gray" size="sm">Closed</Badge>
                     </h3>
-                    <p class="break-words text-xs text-charcoal-400">
-                        Created {{ createdLabel }} · {{ queue.players.length }} player{{ queue.players.length === 1 ? '' : 's' }} ·
-                        {{ queue.courts.length }} court{{ queue.courts.length === 1 ? '' : 's' }}
-                    </p>
+                    <!-- Created-on / created-by metadata — stacked with muted icons on
+                         phones, inline on larger screens. -->
+                    <div
+                        class="mt-1.5 flex flex-col gap-1 text-xs text-charcoal-400 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-3"
+                    >
+                        <span class="inline-flex min-w-0 items-center gap-1.5">
+                            <svg class="size-3.5 shrink-0 text-volt-300/80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="9" />
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 7v5l3 2" />
+                            </svg>
+                            <span class="truncate">Created {{ createdLabel }}</span>
+                        </span>
+                        <span class="inline-flex min-w-0 items-center gap-1.5">
+                            <svg class="size-3.5 shrink-0 text-volt-300/80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 12a4 4 0 100-8 4 4 0 000 8zm-7 8a7 7 0 0114 0" />
+                            </svg>
+                            <span class="truncate">{{ queue.players.length }} player{{ queue.players.length === 1 ? '' : 's' }}</span>
+                        </span>
+                        <span class="inline-flex min-w-0 items-center gap-1.5">
+                            <svg class="size-3.5 shrink-0 text-volt-300/80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="3" y="3" width="7" height="7" rx="1.5" />
+                                <rect x="14" y="14" width="7" height="7" rx="1.5" />
+                                <path stroke-linecap="round" d="M10 3.5h3M10 20.5h3M3.5 10v3M20.5 10v3M14 3.5v2M20.5 6v2M17 10h1.5M10 14h.01M6 20.5v-4M20.5 17v3" />
+                            </svg>
+                            <span class="truncate">{{ queue.courts.length }} court{{ queue.courts.length === 1 ? '' : 's' }}</span>
+                        </span>
+                    </div>
                 </div>
             </button>
 
@@ -450,17 +482,18 @@ const confirmingDelete = ref(false);
                 <!-- Courts -->
                 <section>
                     <div class="mb-2 flex flex-wrap items-center gap-2">
-                        <h4 class="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-charcoal-300">
+                        <h4 class="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-volt-200">
+                            <span class="h-4 w-1 rounded-full bg-volt-300 shadow-[0_0_8px_rgb(255_214_10/0.6)]" />
                             <span
-                                class="grid size-5 place-items-center rounded-md text-volt-300 ring-1 ring-volt-300/30"
-                                :class="anyLive ? 'bg-volt-300/20 animate-pulse' : 'bg-volt-300/10'"
+                                class="grid size-5 place-items-center rounded-md bg-volt-300/15 text-volt-300 ring-1 ring-volt-300/30"
+                                :class="anyLive ? 'animate-pulse' : ''"
                             >
                                 <svg class="size-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M4 9h16M4 15h16M9 4v16M15 4v16" />
                                 </svg>
                             </span>
                             Courts
-                            <Badge color="gray" size="sm">{{ queue.courts.length }} active</Badge>
+                            <Badge color="volt" size="sm">{{ queue.courts.length }} active</Badge>
                         </h4>
                         <div class="ml-auto">
                             <BaseButton
@@ -498,107 +531,204 @@ const confirmingDelete = ref(false);
                 <!-- Waiting pool -->
                 <section>
                     <div class="mb-2 flex flex-wrap items-center gap-2">
-                        <h4 class="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-charcoal-300">
+                        <h4 class="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-volt-200">
+                            <span class="h-4 w-1 rounded-full bg-volt-300 shadow-[0_0_8px_rgb(255_214_10/0.6)]" />
                             Waiting pool
-                            <Badge color="gray" size="sm">{{ waiting.length }} in line</Badge>
+                            <Badge color="volt" size="sm">{{ waiting.length }} in line</Badge>
                         </h4>
                         <p class="ml-auto text-[11px] text-charcoal-400">
                             Fair pick — fewest games first, paused players auto-skip.
                         </p>
                     </div>
 
-                    <TransitionGroup tag="ul" name="list" class="space-y-2">
+                    <TransitionGroup tag="ul" name="list" class="grid grid-cols-2 gap-2 sm:grid-cols-1 sm:gap-2">
                         <li
                             v-for="player in waiting"
                             :key="player.id"
-                            class="group flex flex-wrap items-center gap-3 rounded-xl border px-3 py-2 transition sm:flex-nowrap"
+                            class="group rounded-xl border p-2 transition sm:flex sm:flex-wrap sm:flex-nowrap sm:items-center sm:gap-3 sm:px-3 sm:py-2"
                             :class="
                                 player.paused
                                     ? 'border-white/5 bg-navy-950/20 opacity-60'
                                     : 'border-white/5 bg-navy-950/30 hover:border-volt-300/25 hover:bg-navy-950/50'
                             "
                         >
-                            <PlayerFace :player="player" size="md" editable @edit="openPicker" />
-
-                            <div class="min-w-0 flex-1">
-                                <p class="flex flex-wrap items-center gap-1.5 break-words text-base font-semibold text-white">
-                                    {{ player.name }}
-                                    <span
-                                        v-if="player.fixedPairId"
-                                        class="inline-flex shrink-0 items-center gap-0.5 rounded-full bg-sky-400/10 px-1.5 py-0.5 text-[9px] font-bold text-sky-200 ring-1 ring-sky-400/30"
-                                        :title="`Fixed pair with ${pairPartner(player)?.name ?? 'partner'}`"
+                            <!-- Mobile (<640px): compact 2-col card with a kebab action
+                                 menu. All touch targets are ≥ 48×48px. -->
+                            <div class="sm:hidden">
+                                <div class="flex items-center gap-2">
+                                    <PlayerFace :player="player" size="sm" editable @edit="openPicker" />
+                                    <div class="min-w-0 flex-1">
+                                        <p class="truncate text-sm font-semibold text-white">
+                                            {{ player.name }}
+                                            <span
+                                                v-if="player.fixedPairId"
+                                                class="text-sky-300"
+                                                :title="`Fixed pair with ${pairPartner(player)?.name ?? 'partner'}`"
+                                            >
+                                                🔗
+                                            </span>
+                                        </p>
+                                        <p class="truncate text-[10px] text-charcoal-400">
+                                            {{ player.wins }}w · {{ player.gamesPlayed }}g
+                                            <span v-if="player.skill">· {{ skillLabel(player.skill) }}</span>
+                                            <span v-if="player.paused" class="text-volt-200">☕</span>
+                                        </p>
+                                    </div>
+                                    <!-- Kebab (⋮) — opens the compact action menu -->
+                                    <button
+                                        type="button"
+                                        class="grid size-12 shrink-0 place-items-center rounded-full text-charcoal-300 transition hover:bg-white/10 hover:text-white"
+                                        :title="`Actions for ${player.name}`"
+                                        :aria-label="`Actions for ${player.name}`"
+                                        :aria-expanded="menuOpenId === player.id"
+                                        @click="menuOpenId = menuOpenId === player.id ? null : player.id"
                                     >
-                                        🔗 {{ pairPartner(player)?.name.split(' ')[0] ?? 'paired' }}
-                                    </span>
-                                </p>
-                                <div class="flex flex-wrap items-center gap-1.5">
-                                    <span class="text-[11px] text-charcoal-400">
-                                        {{ player.wins }}w · {{ player.gamesPlayed }}g
-                                    </span>
-                                    <SkillChip v-if="player.skill" :skill="player.skill" />
-                                    <Badge v-if="player.paused" color="gray" size="sm" dot>Taking a break</Badge>
+                                        <svg class="size-5" viewBox="0 0 24 24" fill="currentColor">
+                                            <circle cx="5" cy="12" r="1.7" />
+                                            <circle cx="12" cy="12" r="1.7" />
+                                            <circle cx="19" cy="12" r="1.7" />
+                                        </svg>
+                                    </button>
+                                </div>
+
+                                <!-- Expanding inline action menu (never clipped) -->
+                                <div
+                                    v-if="menuOpenId === player.id"
+                                    class="mt-2 grid grid-cols-2 gap-1.5 border-t border-white/10 pt-2"
+                                >
+                                    <button
+                                        type="button"
+                                        class="flex min-h-12 items-center justify-center gap-1 rounded-lg text-[11px] font-bold transition"
+                                        :class="
+                                            player.fixedPairId
+                                                ? 'bg-sky-400/15 text-sky-200 ring-1 ring-sky-400/40'
+                                                : 'bg-white/5 text-charcoal-200 hover:bg-sky-400/10 hover:text-sky-200'
+                                        "
+                                        :title="player.fixedPairId ? 'Clear fixed pair' : 'Tag a fixed pair — they always team up'"
+                                        @click="menuOpenId = null; player.fixedPairId ? unpair(player) : openPair(player)"
+                                    >
+                                        🔗 {{ player.fixedPairId ? 'Unpair' : 'Pair' }}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        class="flex min-h-12 items-center justify-center gap-1 rounded-lg text-[11px] font-bold transition"
+                                        :class="
+                                            player.paused
+                                                ? 'bg-volt-300/15 text-volt-200 ring-1 ring-volt-300/40'
+                                                : 'bg-white/5 text-charcoal-200 hover:bg-volt-300/10 hover:text-volt-200'
+                                        "
+                                        @click="menuOpenId = null; togglePause(player)"
+                                    >
+                                        ☕ {{ player.paused ? 'Resume' : 'Break' }}
+                                    </button>
+                                    <select
+                                        :value="player.skill ?? ''"
+                                        class="col-span-2 min-h-12 w-full rounded-lg border border-white/10 bg-navy-950/70 px-2 text-[11px] font-semibold text-charcoal-200 focus:border-volt-300/60 focus:outline-none"
+                                        :title="`Set ${player.name}'s skill rating`"
+                                        @change="setSkill(player, $event)"
+                                    >
+                                        <option value="">Level — none</option>
+                                        <option v-for="skill in SKILLS" :key="skill.value" :value="skill.value">
+                                            {{ skill.emoji }} {{ skill.label }}
+                                        </option>
+                                    </select>
+                                    <button
+                                        type="button"
+                                        class="col-span-2 flex min-h-12 items-center justify-center gap-1 rounded-lg bg-red-400/10 text-[11px] font-bold text-red-300 transition hover:bg-red-400/20 hover:text-red-200"
+                                        @click="remove(player)"
+                                    >
+                                        <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path stroke-linecap="round" d="M6 6l12 12M18 6L6 18" />
+                                        </svg>
+                                        Remove from queue
+                                    </button>
                                 </div>
                             </div>
 
-                            <!-- Skill rating tag -->
-                            <select
-                                :value="player.skill ?? ''"
-                                class="min-h-12 rounded-full border border-white/10 bg-navy-950/70 px-3 py-2 text-sm font-semibold text-charcoal-200 transition focus:border-volt-300/60 focus:outline-none"
-                                :title="`Set ${player.name}'s skill rating`"
-                                @change="setSkill(player, $event)"
-                            >
-                                <option value="">Level</option>
-                                <option v-for="skill in SKILLS" :key="skill.value" :value="skill.value">
-                                    {{ skill.emoji }} {{ skill.label }}
-                                </option>
-                            </select>
+                            <!-- Desktop (≥640px): wide row with inline controls -->
+                            <div class="hidden sm:contents">
+                                <PlayerFace :player="player" size="md" editable @edit="openPicker" />
 
-                            <!-- Fixed pair -->
-                            <button
-                                class="grid size-12 place-items-center rounded-full transition"
-                                :class="
-                                    player.fixedPairId
-                                        ? 'bg-sky-400/15 text-sky-200 ring-1 ring-sky-400/40'
-                                        : 'text-charcoal-500 hover:bg-sky-400/10 hover:text-sky-200'
-                                "
-                                :title="player.fixedPairId ? `Clear fixed pair with ${pairPartner(player)?.name ?? ''}` : 'Tag a fixed pair — they always team up'"
-                                :aria-label="player.fixedPairId ? 'Clear fixed pair' : 'Tag fixed pair'"
-                                @click="player.fixedPairId ? unpair(player) : openPair(player)"
-                            >
-                                <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 13.5a4 4 0 015.7 0l2.3 2.3a4 4 0 01-5.7 5.7l-1-1M13.5 10.5a4 4 0 00-5.7 0l-2.3 2.3a4 4 0 005.7 5.7l1-1" />
-                                </svg>
-                            </button>
+                                <div class="min-w-0 flex-1">
+                                    <p class="flex flex-wrap items-center gap-1.5 break-words text-base font-semibold text-white">
+                                        {{ player.name }}
+                                        <span
+                                            v-if="player.fixedPairId"
+                                            class="inline-flex shrink-0 items-center gap-0.5 rounded-full bg-sky-400/10 px-1.5 py-0.5 text-[9px] font-bold text-sky-200 ring-1 ring-sky-400/30"
+                                            :title="`Fixed pair with ${pairPartner(player)?.name ?? 'partner'}`"
+                                        >
+                                            🔗 {{ pairPartner(player)?.name.split(' ')[0] ?? 'paired' }}
+                                        </span>
+                                    </p>
+                                    <div class="flex flex-wrap items-center gap-1.5">
+                                        <span class="text-[11px] text-charcoal-400">
+                                            {{ player.wins }}w · {{ player.gamesPlayed }}g
+                                        </span>
+                                        <SkillChip v-if="player.skill" :skill="player.skill" />
+                                        <Badge v-if="player.paused" color="gray" size="sm" dot>Taking a break</Badge>
+                                    </div>
+                                </div>
 
-                            <!-- Pause / BRB -->
-                            <button
-                                class="grid size-12 place-items-center rounded-full transition"
-                                :class="
-                                    player.paused
-                                        ? 'bg-volt-300/15 text-volt-200 ring-1 ring-volt-300/40'
-                                        : 'text-charcoal-500 hover:bg-volt-300/10 hover:text-volt-200'
-                                "
-                                :title="player.paused ? 'Resume ' + player.name : `Pause ${player.name} (skipped by the randomizer)`"
-                                :aria-label="player.paused ? 'Resume player' : 'Pause player'"
-                                @click="togglePause(player)"
-                            >
-                                <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path v-if="player.paused" stroke-linecap="round" stroke-linejoin="round" d="M12 8v5l3 2" />
-                                    <circle v-else-if="!player.paused" cx="12" cy="12" r="9" />
-                                    <path v-else stroke-linecap="round" d="M12 7v5l3 2" />
-                                </svg>
-                            </button>
+                                <!-- Skill rating tag -->
+                                <select
+                                    :value="player.skill ?? ''"
+                                    class="min-h-12 rounded-full border border-white/10 bg-navy-950/70 px-3 py-2 text-sm font-semibold text-charcoal-200 transition focus:border-volt-300/60 focus:outline-none"
+                                    :title="`Set ${player.name}'s skill rating`"
+                                    @change="setSkill(player, $event)"
+                                >
+                                    <option value="">Level</option>
+                                    <option v-for="skill in SKILLS" :key="skill.value" :value="skill.value">
+                                        {{ skill.emoji }} {{ skill.label }}
+                                    </option>
+                                </select>
 
-                            <button
-                                class="grid size-12 place-items-center rounded-full text-charcoal-500 transition hover:bg-red-400/10 hover:text-red-300"
-                                title="Remove from queue"
-                                aria-label="Remove from queue"
-                                @click="remove(player)"
-                            >
-                                <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path stroke-linecap="round" d="M6 6l12 12M18 6L6 18" />
-                                </svg>
-                            </button>
+                                <!-- Fixed pair -->
+                                <button
+                                    class="grid size-12 place-items-center rounded-full transition"
+                                    :class="
+                                        player.fixedPairId
+                                            ? 'bg-sky-400/15 text-sky-200 ring-1 ring-sky-400/40'
+                                            : 'text-charcoal-500 hover:bg-sky-400/10 hover:text-sky-200'
+                                    "
+                                    :title="player.fixedPairId ? `Clear fixed pair with ${pairPartner(player)?.name ?? ''}` : 'Tag a fixed pair — they always team up'"
+                                    :aria-label="player.fixedPairId ? 'Clear fixed pair' : 'Tag fixed pair'"
+                                    @click="player.fixedPairId ? unpair(player) : openPair(player)"
+                                >
+                                    <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 13.5a4 4 0 015.7 0l2.3 2.3a4 4 0 01-5.7 5.7l-1-1M13.5 10.5a4 4 0 00-5.7 0l-2.3 2.3a4 4 0 005.7 5.7l1-1" />
+                                    </svg>
+                                </button>
+
+                                <!-- Pause / BRB -->
+                                <button
+                                    class="grid size-12 place-items-center rounded-full transition"
+                                    :class="
+                                        player.paused
+                                            ? 'bg-volt-300/15 text-volt-200 ring-1 ring-volt-300/40'
+                                            : 'text-charcoal-500 hover:bg-volt-300/10 hover:text-volt-200'
+                                    "
+                                    :title="player.paused ? 'Resume ' + player.name : `Pause ${player.name} (skipped by the randomizer)`"
+                                    :aria-label="player.paused ? 'Resume player' : 'Pause player'"
+                                    @click="togglePause(player)"
+                                >
+                                    <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path v-if="player.paused" stroke-linecap="round" stroke-linejoin="round" d="M12 8v5l3 2" />
+                                        <circle v-else-if="!player.paused" cx="12" cy="12" r="9" />
+                                        <path v-else stroke-linecap="round" d="M12 7v5l3 2" />
+                                    </svg>
+                                </button>
+
+                                <button
+                                    class="grid size-12 place-items-center rounded-full text-charcoal-500 transition hover:bg-red-400/10 hover:text-red-300"
+                                    title="Remove from queue"
+                                    aria-label="Remove from queue"
+                                    @click="remove(player)"
+                                >
+                                    <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" d="M6 6l12 12M18 6L6 18" />
+                                    </svg>
+                                </button>
+                            </div>
                         </li>
                     </TransitionGroup>
 
@@ -612,7 +742,10 @@ const confirmingDelete = ref(false);
             <!-- Right: live leaderboard -->
             <aside class="min-w-0">
                 <div class="mb-2 flex items-center justify-between">
-                    <h4 class="text-xs font-bold uppercase tracking-wide text-charcoal-300">Live leaderboard</h4>
+                    <h4 class="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-volt-200">
+                        <span class="h-4 w-1 rounded-full bg-volt-300 shadow-[0_0_8px_rgb(255_214_10/0.6)]" />
+                        Live leaderboard
+                    </h4>
                     <Badge color="gray" size="sm">{{ queue.players.length }} player{{ queue.players.length === 1 ? '' : 's' }}</Badge>
                 </div>
 

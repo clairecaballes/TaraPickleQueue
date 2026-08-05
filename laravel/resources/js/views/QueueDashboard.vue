@@ -92,18 +92,29 @@ onMounted(async () => {
         now.value = Date.now();
     }, 1000);
 
-    // 1) Hydrate the deep-linked court (if any) before the courts load so
-    //    fetchCourts() never overrides it with the first court.
-    const courtId = Number(route.params.courtId);
+    // 1) Parse the deep-linked id — shared links and QR codes now point at
+    //    /queue/{queueId} (see utils/snapshot.js queueLink()).
+    const rawQueueId = route.params.queueId;
+    const courtId = Number(rawQueueId);
 
+    // Legacy open-access queue ids (string uids) belong to the open-access
+    // dashboard, not the account queue engine — hand those over gracefully.
+    if (rawQueueId && !Number.isInteger(courtId)) {
+        router.replace({ path: '/play', query: { queue: rawQueueId } });
+
+        return;
+    }
+
+    // 2) Hydrate the deep-linked court (if any) before the courts load so
+    //    fetchCourts() never overrides it with the first court.
     if (Number.isInteger(courtId) && courtId > 0) {
         await queue.activateCourt(courtId);
     }
 
-    // 2) Pull the full picture, then sanity-check the deep link.
+    // 3) Pull the full picture, then sanity-check the deep link.
     await Promise.all([queue.fetchCourts(), queue.fetchGroups()]);
 
-    if (route.params.courtId) {
+    if (rawQueueId) {
         const exists = courts.value.some((court) => court.id === courtId);
 
         // Stale/removed court in a shared link — fall back to the first one.
@@ -112,7 +123,7 @@ onMounted(async () => {
         }
     }
 
-    // 3) Real-time channel was attached by activateCourt()/fetchCourts() —
+    // 4) Real-time channel was attached by activateCourt()/fetchCourts() —
     //    the polling loop is the safety net, not the primary source.
     startPolling();
     window.addEventListener('visibilitychange', onVisible);
@@ -121,9 +132,16 @@ onMounted(async () => {
 // Navigating between two shared links (/queue/3 → /queue/5) reuses this
 // component, so watch the param and rehydrate instead of waiting for a remount.
 watch(
-    () => route.params.courtId,
-    async (courtId) => {
-        const id = Number(courtId);
+    () => route.params.queueId,
+    async (queueId) => {
+        const id = Number(queueId);
+
+        // Mirrors the mount handler — legacy string ids belong on /play.
+        if (queueId && !Number.isInteger(id)) {
+            router.replace({ path: '/play', query: { queue: queueId } });
+
+            return;
+        }
 
         if (!Number.isInteger(id) || id <= 0) {
             return;
@@ -269,13 +287,15 @@ const isMyEntry = (entry) => Array.isArray(entry?.players) && entry.players.some
                             <path stroke-linecap="round" d="M10.5 6h3.5a3 3 0 013 3v0M12 18h3a2 2 0 002-2v-6" />
                         </svg>
                     </div>
-                    <span class="whitespace-nowrap text-lg font-black tracking-tight text-white">TaraPickle</span>
+                    <span class="min-w-0 truncate whitespace-nowrap text-lg font-black tracking-tight text-white">
+                        Pickle Ta Bai!
+                    </span>
                 </div>
 
-                <div class="flex shrink-0 items-center gap-3">
+                <div class="flex shrink-0 items-center gap-1.5 sm:gap-3">
                     <button
                         v-if="auth.isAdmin"
-                        class="min-h-12 rounded-full border border-white/10 px-4 py-2 text-sm font-semibold text-charcoal-200 transition hover:border-volt-300/40 hover:text-volt-200"
+                        class="min-h-12 shrink-0 rounded-full border border-white/10 px-3 py-2 text-sm font-semibold text-charcoal-200 transition hover:border-volt-300/40 hover:text-volt-200 sm:px-4"
                         @click="router.push('/admin')"
                     >
                         Court control
@@ -283,7 +303,7 @@ const isMyEntry = (entry) => Array.isArray(entry?.players) && entry.players.some
 
                     <!-- Outdoor Daylight toggle -->
                     <button
-                        class="grid size-12 place-items-center rounded-full transition"
+                        class="grid size-11 place-items-center rounded-full transition sm:size-12"
                         :class="
                             daylight
                                 ? 'bg-volt-300/15 text-volt-200 ring-1 ring-volt-300/40'
@@ -303,10 +323,10 @@ const isMyEntry = (entry) => Array.isArray(entry?.players) && entry.players.some
                         </svg>
                     </button>
 
-                    <!-- Manual refresh (min 48x48px) — pull the latest state when
-                         the phone loses signal or WebSockets stall. -->
+                    <!-- Manual refresh (min 44px on phones) — pull the latest state
+                         when the phone loses signal or WebSockets stall. -->
                     <button
-                        class="grid size-12 place-items-center rounded-full text-charcoal-300 transition hover:bg-white/10 hover:text-white"
+                        class="grid size-11 place-items-center rounded-full text-charcoal-300 transition hover:bg-white/10 hover:text-white sm:size-12"
                         title="Refresh queue"
                         aria-label="Refresh queue"
                         @click="refreshNow"
@@ -323,11 +343,11 @@ const isMyEntry = (entry) => Array.isArray(entry?.players) && entry.players.some
                         </svg>
                     </button>
 
-                    <div class="flex items-center gap-2.5">
+                    <div class="flex min-w-0 items-center gap-2 sm:gap-2.5">
                         <PlayerAvatar :player="auth.user" size="sm" />
-                        <span class="hidden whitespace-nowrap text-sm font-semibold text-white sm:block">{{ auth.user?.name }}</span>
+                        <span class="hidden min-w-0 truncate whitespace-nowrap text-sm font-semibold text-white sm:block">{{ auth.user?.name }}</span>
                         <button
-                            class="grid size-12 place-items-center rounded-full text-charcoal-300 transition hover:bg-white/10 hover:text-white"
+                            class="grid size-11 shrink-0 place-items-center rounded-full text-charcoal-300 transition hover:bg-white/10 hover:text-white sm:size-12"
                             title="Sign out"
                             aria-label="Sign out"
                             @click="logout"
@@ -377,7 +397,10 @@ const isMyEntry = (entry) => Array.isArray(entry?.players) && entry.players.some
             <section>
                 <div class="mb-4 flex items-end justify-between">
                     <div>
-                        <h1 class="fluid-display font-black tracking-tight text-white">Active courts</h1>
+                        <h1 class="fluid-display flex items-center gap-2.5 font-black tracking-tight text-white">
+                            <span class="h-5 w-1.5 shrink-0 rounded-full bg-volt-300 shadow-[0_0_10px_rgb(255_214_10/0.7)]" />
+                            Active courts
+                        </h1>
                         <p class="text-sm text-charcoal-300">Live matches and the players dinking on them right now.</p>
                     </div>
                 </div>
@@ -494,7 +517,10 @@ const isMyEntry = (entry) => Array.isArray(entry?.players) && entry.players.some
             <section>
                 <div class="mb-4 flex items-center justify-between">
                     <div>
-                        <h2 class="fluid-display font-black tracking-tight text-white">Next up</h2>
+                        <h2 class="fluid-display flex items-center gap-2.5 font-black tracking-tight text-white">
+                            <span class="h-5 w-1.5 shrink-0 rounded-full bg-volt-300 shadow-[0_0_10px_rgb(255_214_10/0.7)]" />
+                            Next up
+                        </h2>
                         <p class="text-sm text-charcoal-300">Your place in line — updates live.</p>
                     </div>
                 </div>
@@ -621,7 +647,7 @@ const isMyEntry = (entry) => Array.isArray(entry?.players) && entry.players.some
         </main>
 
         <footer class="mt-10 px-4 pb-4 text-center">
-            <p class="text-xs font-bold tracking-wide text-charcoal-400">Tara Pickle by Claire</p>
+            <p class="text-xs font-bold tracking-wide text-charcoal-400">Pickle Ta Bai! by Claire</p>
         </footer>
 
         <!-- Join queue modal -->

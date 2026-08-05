@@ -1,5 +1,5 @@
 <script setup>
-// Crossed paddles + perforated pickleball — the TaraPickle brand mark.
+// Crossed paddles + perforated pickleball — the Pickle Ta Bai! brand mark.
 // Inherits its rendered size from the wrapping element (class="size-*").
 </script>
 

@@ -73,7 +73,7 @@ async function submit() {
                         <path stroke-linecap="round" d="M10.5 6h3.5a3 3 0 013 3v0M12 18h3a2 2 0 002-2v-6" />
                     </svg>
                 </div>
-                <h1 class="text-3xl font-black tracking-tight text-white">TaraPickle</h1>
+                <h1 class="text-3xl font-black tracking-tight text-white">Pickle Ta Bai!</h1>
                 <p class="mt-1 text-sm text-charcoal-300">{{ subtitleText }}</p>
             </div>
 
@@ -136,7 +136,7 @@ async function submit() {
         </div>
 
         <footer class="absolute bottom-4 left-0 right-0 text-center">
-            <p class="text-xs font-bold tracking-wide text-charcoal-400">Tara Pickle by Claire</p>
+            <p class="text-xs font-bold tracking-wide text-charcoal-400">Pickle Ta Bai! by Claire</p>
         </footer>
     </div>
 </template>

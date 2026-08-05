@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Broadcast;
 
 /*
 |--------------------------------------------------------------------------
-| Broadcast Channels — TaraPickle
+| Broadcast Channels — Pickle Ta Bai!
 |--------------------------------------------------------------------------
 |
 | Every real-time event (QueueUpdated, CourtCalled, MatchEnded) is published

@@ -5,9 +5,16 @@
  */
 import { downloadBlob, downloadDataUrl, toCsv } from './format';
 
-/** Deep link that opens the dashboard focused on one queue (history-mode router). */
+/**
+ * Deep link that opens the live queue board focused on one queue.
+ *
+ * The URL carries the explicit queue/court id (e.g. /queue/42), so a phone
+ * scanning the QR code lands directly on the queue target page, which parses
+ * the id on mount, fetches the live queue + courts and attaches the real-time
+ * channel instead of just showing the app shell.
+ */
 export function queueLink(queueId) {
-    return `${window.location.origin}/play?queue=${encodeURIComponent(queueId)}`;
+    return `${window.location.origin}/queue/${encodeURIComponent(queueId)}`;
 }
 
 function winRate(player) {
@@ -56,7 +63,7 @@ export function downloadQueueCsv(queue) {
     const csv = queueCsv(queue);
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
 
-    downloadBlob(blob, `tarapickle-${slugify(queue.name)}.csv`);
+    downloadBlob(blob, `pickle-ta-bai-${slugify(queue.name)}.csv`);
 
     return rowsOf(queue).length;
 }
@@ -141,7 +148,7 @@ export function queuePng(queue) {
     // Title
     ctx.fillStyle = '#ffffff';
     ctx.font = "900 40px 'Bungee', 'Instrument Sans', sans-serif";
-    ctx.fillText('Tara Pickle', 56, 82);
+    ctx.fillText('Pickle Ta Bai!', 56, 82);
     ctx.fillStyle = '#ffd60a';
     ctx.fillText(truncateText(ctx, queue.name, 520), 56, 126);
 
@@ -227,9 +234,9 @@ export function queuePng(queue) {
         ctx.fillText(`… and ${allRows.length - rows.length} more players`, 56, height - 66);
     }
 
-    ctx.fillText('Tara Pickle by Claire  ·  fair queues, cute critters, live stats', 56, height - 48);
+    ctx.fillText('Pickle Ta Bai! by Claire  ·  fair queues, cute critters, live stats', 56, height - 48);
 
-    downloadDataUrl(canvas.toDataURL('image/png'), `tarapickle-${slugify(queue.name)}.png`);
+    downloadDataUrl(canvas.toDataURL('image/png'), `pickle-ta-bai-${slugify(queue.name)}.png`);
 
     return rows.length;
 }
@@ -260,7 +267,7 @@ export function queuePdf(queue) {
 <html>
 <head>
 <meta charset="utf-8">
-<title>Tara Pickle — ${queue.name}</title>
+<title>Pickle Ta Bai! — ${queue.name}</title>
 <style>
     * { box-sizing: border-box; }
     body { margin: 0; font-family: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif; background: #0b1426; color: #e6e6e8; }
@@ -288,7 +295,7 @@ export function queuePdf(queue) {
 <body>
     <div class="wrap">
         <div class="bar"></div>
-        <h1>Tara<span>Pickle</span></h1>
+        <h1>Pickle Ta <span>Bai!</span></h1>
         <h2>${esc(queue.name)}</h2>
         <p class="meta">${new Date(queue.createdAt).toLocaleString([], { dateStyle: 'long', timeStyle: 'short' })}  ·  ${queue.players.length} player${queue.players.length === 1 ? '' : 's'}  ·  ${courts.length} court${courts.length === 1 ? '' : 's'}  ·  ${queue.open ? 'open' : 'closed'}</p>
         <div class="courts">
@@ -311,7 +318,7 @@ export function queuePdf(queue) {
                 </tr>`).join('')}
             </tbody>
         </table>
-        <footer>Tara Pickle by Claire  ·  fair queues, cute critters, live stats</footer>
+        <footer>Pickle Ta Bai! by Claire  ·  fair queues, cute critters, live stats</footer>
     </div>
 </body>
 </html>`);
@@ -349,11 +356,11 @@ export async function shareQueue(queue) {
         .slice(0, 3)
         .map((player, index) => `${index + 1}. ${player.name} — ${player.wins} win${player.wins === 1 ? '' : 's'}`)
         .join('\n');
-    const text = `Tara Pickle — ${queue.name} 🐾\n${podium}\n\n${queue.players.length} players · ${queue.courts.length} court${queue.courts.length === 1 ? '' : 's'} on the session`;
+    const text = `Pickle Ta Bai! — ${queue.name} 🐾\n${podium}\n\n${queue.players.length} players · ${queue.courts.length} court${queue.courts.length === 1 ? '' : 's'} on the session`;
 
     if (navigator.share) {
         try {
-            await navigator.share({ title: `Tara Pickle — ${queue.name}`, text, url });
+            await navigator.share({ title: `Pickle Ta Bai! — ${queue.name}`, text, url });
 
             return 'shared';
         } catch {

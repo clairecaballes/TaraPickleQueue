@@ -83,7 +83,7 @@ function enter() {
             <h1
                 class="animate-rise mt-7 font-display text-5xl leading-none tracking-tight text-white [animation-delay:120ms] sm:text-7xl"
             >
-                Tara<span class="text-volt-300 drop-shadow-[0_0_25px_rgb(255_214_10/0.5)]">Pickle</span>
+                Pickle Ta <span class="text-volt-300 drop-shadow-[0_0_25px_rgb(255_214_10/0.5)]">Bai!</span>
             </h1>
 
             <p class="animate-rise mt-4 text-base font-medium text-charcoal-300 [animation-delay:220ms] sm:text-lg">
@@ -130,7 +130,7 @@ function enter() {
 
         <!-- Global footer -->
         <footer class="absolute bottom-5 left-0 right-0 z-10 text-center">
-            <p class="text-xs font-bold tracking-wide text-charcoal-400">Tara Pickle by Claire</p>
+            <p class="text-xs font-bold tracking-wide text-charcoal-400">Pickle Ta Bai! by Claire</p>
         </footer>
     </div>
 </template>

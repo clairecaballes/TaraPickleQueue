@@ -101,15 +101,15 @@ onBeforeUnmount(() => window.clearInterval(clock));
         <!-- Header -->
         <header class="sticky top-0 z-40 border-b border-white/10 bg-navy-950/85 backdrop-blur-md">
             <div class="mx-auto w-full max-w-6xl px-4">
-                <div class="flex items-center justify-between py-3.5">
-                    <div class="flex items-center gap-3">
-                        <TaraPickleLogo class="size-9 drop-shadow-[0_4px_14px_rgb(255_214_10/0.35)]" />
-                        <div>
-                            <span class="block text-lg font-black leading-none tracking-tight text-white">TaraPickle</span>
-                            <span class="text-[11px] text-charcoal-400">Open court · no accounts</span>
+                <div class="flex items-center justify-between gap-2 py-3.5">
+                    <div class="flex min-w-0 items-center gap-2.5 sm:gap-3">
+                        <TaraPickleLogo class="size-9 shrink-0 drop-shadow-[0_4px_14px_rgb(255_214_10/0.35)]" />
+                        <div class="min-w-0">
+                            <span class="block truncate text-lg font-black leading-none tracking-tight text-white">Pickle Ta Bai!</span>
+                            <span class="block truncate text-[11px] text-charcoal-400">Open court · no accounts</span>
                         </div>
                     </div>
-                    <div class="flex items-center gap-2">
+                    <div class="flex shrink-0 items-center gap-1.5 sm:gap-2">
                         <Badge color="gray" size="sm" class="hidden sm:inline-flex">
                             {{ totalQueues }} queue{{ totalQueues === 1 ? '' : 's' }}
                         </Badge>
@@ -119,7 +119,7 @@ onBeforeUnmount(() => window.clearInterval(clock));
 
                         <!-- Outdoor Daylight toggle -->
                         <button
-                            class="grid size-12 place-items-center rounded-full transition"
+                            class="grid size-11 place-items-center rounded-full transition sm:size-12"
                             :class="
                                 daylight
                                     ? 'bg-volt-300/15 text-volt-200 ring-1 ring-volt-300/40'
@@ -141,7 +141,7 @@ onBeforeUnmount(() => window.clearInterval(clock));
 
                         <!-- Court-call sound toggle -->
                         <button
-                            class="grid size-12 place-items-center rounded-full transition"
+                            class="grid size-11 place-items-center rounded-full transition sm:size-12"
                             :class="
                                 ttsEnabled
                                     ? 'bg-volt-300/15 text-volt-200 ring-1 ring-volt-300/40'
@@ -160,9 +160,9 @@ onBeforeUnmount(() => window.clearInterval(clock));
 
                         <!-- How to use -->
                         <button
-                            class="grid size-12 place-items-center rounded-full border border-white/10 text-base font-black text-charcoal-200 transition hover:border-volt-300/40 hover:bg-volt-300/10 hover:text-volt-200"
-                            title="How to use TaraPickle"
-                            aria-label="How to use TaraPickle"
+                            class="grid size-11 place-items-center rounded-full border border-white/10 text-base font-black text-charcoal-200 transition hover:border-volt-300/40 hover:bg-volt-300/10 hover:text-volt-200 sm:size-12"
+                            title="How to use Pickle Ta Bai!"
+                            aria-label="How to use Pickle Ta Bai!"
                             @click="howOpen = true"
                         >
                             ?
@@ -170,11 +170,12 @@ onBeforeUnmount(() => window.clearInterval(clock));
                     </div>
                 </div>
 
-                <!-- Main navigation tabs -->
-                <nav class="flex gap-3 pb-2" aria-label="Main navigation">
+                <!-- Main navigation tabs — 3-up grid on phones so nothing wraps
+                     or clips off-screen; back to inline pills on larger screens. -->
+                <nav class="grid grid-cols-3 gap-1.5 pb-2 sm:flex sm:gap-3" aria-label="Main navigation">
                     <button
                         type="button"
-                        class="inline-flex min-h-12 items-center gap-2 rounded-full px-4 py-2 text-sm font-bold transition"
+                        class="inline-flex min-h-12 min-w-0 items-center justify-center gap-1.5 rounded-full px-1.5 py-2 text-sm font-bold transition sm:w-auto sm:gap-2 sm:px-4"
                         :class="
                             tab === 'queues'
                                 ? 'bg-volt-300 text-ink shadow-[0_4px_14px_-2px_rgb(255_214_10/0.45)]'
@@ -182,13 +183,13 @@ onBeforeUnmount(() => window.clearInterval(clock));
                         "
                         @click="tab = 'queues'"
                     >
-                        <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <svg class="size-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M4 9h16M4 15h16M9 4v16M15 4v16" />
                             <path stroke-linecap="round" d="M2 6v4M2 14v4M22 6v4M22 14v4" />
                         </svg>
-                        Queues
+                        <span class="truncate">Queues</span>
                         <span
-                            class="rounded-full px-1.5 text-[10px]"
+                            class="shrink-0 rounded-full px-1.5 text-[10px]"
                             :class="tab === 'queues' ? 'bg-navy-950/15 text-ink' : 'bg-white/10 text-charcoal-300'"
                         >
                             {{ totalQueues }}
@@ -196,7 +197,7 @@ onBeforeUnmount(() => window.clearInterval(clock));
                     </button>
                     <button
                         type="button"
-                        class="inline-flex min-h-12 items-center gap-2 rounded-full px-4 py-2 text-sm font-bold transition"
+                        class="inline-flex min-h-12 min-w-0 items-center justify-center gap-1.5 rounded-full px-1.5 py-2 text-sm font-bold transition sm:w-auto sm:gap-2 sm:px-4"
                         :class="
                             tab === 'board'
                                 ? 'bg-volt-300 text-ink shadow-[0_4px_14px_-2px_rgb(255_214_10/0.45)]'
@@ -204,15 +205,15 @@ onBeforeUnmount(() => window.clearInterval(clock));
                         "
                         @click="tab = 'board'"
                     >
-                        <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <svg class="size-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 10h16M4 14h10M4 18h10" />
                             <circle cx="18" cy="18" r="3" />
                         </svg>
-                        Queue Board
+                        <span class="truncate">Queue Board</span>
                     </button>
                     <button
                         type="button"
-                        class="inline-flex min-h-12 items-center gap-2 rounded-full px-4 py-2 text-sm font-bold transition"
+                        class="inline-flex min-h-12 min-w-0 items-center justify-center gap-1.5 rounded-full px-1.5 py-2 text-sm font-bold transition sm:w-auto sm:gap-2 sm:px-4"
                         :class="
                             tab === 'results'
                                 ? 'bg-volt-300 text-ink shadow-[0_4px_14px_-2px_rgb(255_214_10/0.45)]'
@@ -220,10 +221,10 @@ onBeforeUnmount(() => window.clearInterval(clock));
                         "
                         @click="tab = 'results'"
                     >
-                        <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <svg class="size-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M6 20h12M8 16h8M9 12h6M10 8h4M12 4v16" />
                         </svg>
-                        Results
+                        <span class="truncate">Results</span>
                     </button>
                 </nav>
             </div>
@@ -327,7 +328,7 @@ onBeforeUnmount(() => window.clearInterval(clock));
         <!-- Global footer -->
         <footer class="mt-10 px-4">
             <div class="mx-auto w-full max-w-6xl border-t border-white/10 pt-6 pb-4 text-center">
-                <p class="text-xs font-bold tracking-wide text-charcoal-300">Tara Pickle by Claire</p>
+                <p class="text-xs font-bold tracking-wide text-charcoal-300">Pickle Ta Bai! by Claire</p>
                 <p class="mt-1 text-[11px] text-charcoal-500">
                     Fair queues, cute critters, live stats — everything auto-saves to this browser (localStorage).
                 </p>

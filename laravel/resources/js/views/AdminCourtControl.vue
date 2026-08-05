@@ -536,7 +536,7 @@ function selectCourt(courtId) {
         </main>
 
         <footer class="mt-10 px-4 pb-4 text-center">
-            <p class="text-xs font-bold tracking-wide text-charcoal-400">Tara Pickle by Claire</p>
+            <p class="text-xs font-bold tracking-wide text-charcoal-400">Pickle Ta Bai! by Claire</p>
         </footer>
 
         <!-- Score entry modal -->

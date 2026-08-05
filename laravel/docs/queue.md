@@ -1,4 +1,4 @@
-# TaraPickle — Queue Engine & Court Rules
+# Pickle Ta Bai! — Queue Engine & Court Rules
 
 The core logic lives in **`app/Services/QueueService.php`** and is wrapped by the
 queue/match API controllers. Every operation runs inside a **DB transaction with

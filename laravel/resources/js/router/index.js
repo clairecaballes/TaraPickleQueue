@@ -4,7 +4,7 @@ import { TOKEN_KEY } from '../api/http';
 import { useAuthStore } from '../stores/auth';
 
 /**
- * TaraPickle routing.
+ * Pickle Ta Bai! routing.
  *
  *  - "/" and "/play" are fully open-access — anyone can run queues.
  *  - "/login", "/register" are guest-only.
@@ -42,9 +42,10 @@ const routes = [
         meta: { requiresAuth: true },
     },
     {
-        // Deep link: /queue/{courtId} — opens the queue dashboard focused on
-        // one specific court so a shared link hydrates the right line.
-        path: '/queue/:courtId',
+        // Deep link: /queue/{queueId} — the QR-code / share target. On mount
+        // the dashboard parses the id, hydrates live players, on-deck status,
+        // the waiting list and courts, and subscribes to the real-time channel.
+        path: '/queue/:queueId',
         name: 'queue.court',
         component: () => import('../views/QueueDashboard.vue'),
         meta: { requiresAuth: true },

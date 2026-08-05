@@ -19,7 +19,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 /**
- * Core queue engine for TaraPickle.
+ * Core queue engine for Pickle Ta Bai!.
  *
  * Every operation runs inside a DB transaction and uses pessimistic row locks
  * (lockForUpdate) so concurrent joins/calls cannot double-book a player or
