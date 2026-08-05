@@ -12,6 +12,7 @@ import Badge from '../components/ui/Badge.vue';
 import BaseButton from '../components/ui/BaseButton.vue';
 import { useTarapickleStore } from '../stores/tarapickle';
 import { announce, soundOnPreview } from '../utils/speech';
+import { getTheme, toggleTheme } from '../utils/theme';
 
 const store = useTarapickleStore();
 const { sortedQueues } = storeToRefs(store);
@@ -31,6 +32,13 @@ const totalPlayers = computed(() =>
 );
 
 const ttsEnabled = computed(() => store.settings.tts);
+
+/** Outdoor Daylight high-contrast toggle. */
+const daylight = ref(getTheme() === 'daylight');
+
+function toggleThemeMode() {
+    daylight.value = toggleTheme() === 'daylight';
+}
 
 function notify(message) {
     toast.value = message;
@@ -102,16 +110,38 @@ onBeforeUnmount(() => window.clearInterval(clock));
                         </div>
                     </div>
                     <div class="flex items-center gap-2">
-                        <Badge color="gray" size="sm">
+                        <Badge color="gray" size="sm" class="hidden sm:inline-flex">
                             {{ totalQueues }} queue{{ totalQueues === 1 ? '' : 's' }}
                         </Badge>
-                        <Badge color="volt" size="sm">
+                        <Badge color="volt" size="sm" class="hidden sm:inline-flex">
                             {{ totalPlayers }} player{{ totalPlayers === 1 ? '' : 's' }}
                         </Badge>
 
+                        <!-- Outdoor Daylight toggle -->
+                        <button
+                            class="grid size-12 place-items-center rounded-full transition"
+                            :class="
+                                daylight
+                                    ? 'bg-volt-300/15 text-volt-200 ring-1 ring-volt-300/40'
+                                    : 'text-charcoal-400 hover:bg-white/10 hover:text-white'
+                            "
+                            :title="daylight ? 'Switch to dark theme' : 'Switch to Outdoor Daylight (high contrast)'"
+                            aria-label="Toggle Outdoor Daylight theme"
+                            :aria-pressed="daylight"
+                            @click="toggleThemeMode"
+                        >
+                            <svg v-if="daylight" class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="4" />
+                                <path stroke-linecap="round" d="M12 2v2m0 16v2M4.9 4.9l1.4 1.4m11.4 11.4l1.4 1.4M2 12h2m16 0h2M4.9 19.1l1.4-1.4m11.4-11.4l1.4-1.4" />
+                            </svg>
+                            <svg v-else class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.36 6.36l-.7-.7M6.34 6.34l-.7-.7m12.72 0l-.7.7M6.34 17.66l-.7.7M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                            </svg>
+                        </button>
+
                         <!-- Court-call sound toggle -->
                         <button
-                            class="rounded-full p-2 transition"
+                            class="grid size-12 place-items-center rounded-full transition"
                             :class="
                                 ttsEnabled
                                     ? 'bg-volt-300/15 text-volt-200 ring-1 ring-volt-300/40'
@@ -121,7 +151,7 @@ onBeforeUnmount(() => window.clearInterval(clock));
                             aria-label="Toggle court-call sound"
                             @click="toggleTts"
                         >
-                            <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M4 10v4a2 2 0 002 2h2l4 4V4L8 8H6a2 2 0 00-2 2z" />
                                 <path v-if="!ttsEnabled" stroke-linecap="round" d="M16 9l4 6m0-6l-4 6" />
                                 <path v-else stroke-linecap="round" stroke-linejoin="round" d="M15.5 8.5a5 5 0 010 7M18 6a8.5 8.5 0 010 12" />
@@ -130,7 +160,7 @@ onBeforeUnmount(() => window.clearInterval(clock));
 
                         <!-- How to use -->
                         <button
-                            class="grid size-9 place-items-center rounded-full border border-white/10 text-sm font-black text-charcoal-200 transition hover:border-volt-300/40 hover:bg-volt-300/10 hover:text-volt-200"
+                            class="grid size-12 place-items-center rounded-full border border-white/10 text-base font-black text-charcoal-200 transition hover:border-volt-300/40 hover:bg-volt-300/10 hover:text-volt-200"
                             title="How to use TaraPickle"
                             aria-label="How to use TaraPickle"
                             @click="howOpen = true"
@@ -141,13 +171,13 @@ onBeforeUnmount(() => window.clearInterval(clock));
                 </div>
 
                 <!-- Main navigation tabs -->
-                <nav class="flex gap-1 pb-2" aria-label="Main navigation">
+                <nav class="flex gap-3 pb-2" aria-label="Main navigation">
                     <button
                         type="button"
-                        class="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-bold transition"
+                        class="inline-flex min-h-12 items-center gap-2 rounded-full px-4 py-2 text-sm font-bold transition"
                         :class="
                             tab === 'queues'
-                                ? 'bg-volt-300 text-navy-950 shadow-[0_4px_14px_-2px_rgb(255_214_10/0.45)]'
+                                ? 'bg-volt-300 text-ink shadow-[0_4px_14px_-2px_rgb(255_214_10/0.45)]'
                                 : 'text-charcoal-300 hover:bg-white/10 hover:text-white'
                         "
                         @click="tab = 'queues'"
@@ -159,17 +189,17 @@ onBeforeUnmount(() => window.clearInterval(clock));
                         Queues
                         <span
                             class="rounded-full px-1.5 text-[10px]"
-                            :class="tab === 'queues' ? 'bg-navy-950/15 text-navy-950' : 'bg-white/10 text-charcoal-300'"
+                            :class="tab === 'queues' ? 'bg-navy-950/15 text-ink' : 'bg-white/10 text-charcoal-300'"
                         >
                             {{ totalQueues }}
                         </span>
                     </button>
                     <button
                         type="button"
-                        class="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-bold transition"
+                        class="inline-flex min-h-12 items-center gap-2 rounded-full px-4 py-2 text-sm font-bold transition"
                         :class="
                             tab === 'board'
-                                ? 'bg-volt-300 text-navy-950 shadow-[0_4px_14px_-2px_rgb(255_214_10/0.45)]'
+                                ? 'bg-volt-300 text-ink shadow-[0_4px_14px_-2px_rgb(255_214_10/0.45)]'
                                 : 'text-charcoal-300 hover:bg-white/10 hover:text-white'
                         "
                         @click="tab = 'board'"
@@ -182,10 +212,10 @@ onBeforeUnmount(() => window.clearInterval(clock));
                     </button>
                     <button
                         type="button"
-                        class="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-bold transition"
+                        class="inline-flex min-h-12 items-center gap-2 rounded-full px-4 py-2 text-sm font-bold transition"
                         :class="
                             tab === 'results'
-                                ? 'bg-volt-300 text-navy-950 shadow-[0_4px_14px_-2px_rgb(255_214_10/0.45)]'
+                                ? 'bg-volt-300 text-ink shadow-[0_4px_14px_-2px_rgb(255_214_10/0.45)]'
                                 : 'text-charcoal-300 hover:bg-white/10 hover:text-white'
                         "
                         @click="tab = 'results'"
@@ -239,7 +269,7 @@ onBeforeUnmount(() => window.clearInterval(clock));
                                 type="text"
                                 maxlength="50"
                                 placeholder="Queue name (optional) — e.g. Morning Court 1"
-                                class="w-full rounded-xl border border-white/10 bg-navy-950/60 px-4 py-3 text-sm text-white placeholder-charcoal-500 transition focus:border-volt-300/60 focus:outline-none focus:ring-2 focus:ring-volt-300/20"
+                                class="w-full rounded-xl border border-white/10 bg-navy-950/60 px-4 py-3 text-base text-white placeholder-charcoal-500 transition focus:border-volt-300/60 focus:outline-none focus:ring-2 focus:ring-volt-300/20"
                                 @keydown.enter.prevent="createQueue"
                             />
                             <p class="mt-1.5 text-[11px] text-charcoal-400">

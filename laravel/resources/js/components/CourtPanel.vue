@@ -238,16 +238,16 @@ function removeCourt() {
         :class="match ? 'border-volt-300/30 shadow-glow' : 'border-white/10 hover:border-white/20'"
     >
         <!-- Court header -->
-        <div class="mb-3 flex items-center gap-2">
+        <div class="mb-3 flex flex-wrap items-center gap-2">
             <span
-                class="inline-grid size-8 shrink-0 place-items-center rounded-lg text-sm font-black text-navy-950"
-                :class="match ? 'animate-pulse bg-volt-300' : 'bg-white/15 text-white'"
+                class="inline-grid size-10 shrink-0 place-items-center rounded-lg text-base font-black"
+                :class="match ? 'animate-pulse bg-volt-300 text-ink' : 'bg-charcoal-800/50 text-charcoal-50'"
             >
                 {{ court.label.replace('Court ', '') }}
             </span>
             <div class="min-w-0 flex-1">
-                <h4 class="truncate text-sm font-black tracking-tight text-white">{{ court.label }}</h4>
-                <p class="text-[11px] text-charcoal-400">
+                <h4 class="break-words text-base font-black leading-snug tracking-tight text-white">{{ court.label }}</h4>
+                <p class="text-xs text-charcoal-400">
                     {{ waiting.length }} ready · {{ onDeck.length }} on deck
                 </p>
             </div>
@@ -267,7 +267,7 @@ function removeCourt() {
 
             <!-- Per-court close-call sound toggle -->
             <button
-                class="rounded-full p-1.5 transition"
+                class="grid size-12 place-items-center rounded-full transition"
                 :class="
                     props.court.announce
                         ? 'text-volt-300 hover:bg-volt-300/10'
@@ -277,7 +277,7 @@ function removeCourt() {
                 :aria-label="props.court.announce ? 'Mute court call sound' : 'Turn on court call sound'"
                 @click="toggleSound"
             >
-                <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M4 10v4a2 2 0 002 2h2l4 4V4L8 8H6a2 2 0 00-2 2z" />
                     <path v-if="!props.court.announce" stroke-linecap="round" d="M16 9l4 6m0-6l-4 6" />
                     <path v-else stroke-linecap="round" stroke-linejoin="round" d="M15.5 8.5a5 5 0 010 7M18 6a8.5 8.5 0 010 12" />
@@ -287,7 +287,7 @@ function removeCourt() {
             <!-- Close / wrap up a pending call -->
             <button
                 v-if="!match && onDeck.length"
-                class="rounded-full px-2.5 py-1.5 text-[11px] font-bold transition"
+                class="min-h-12 min-w-12 rounded-full px-3 py-1.5 text-sm font-bold transition"
                 :class="
                     closing
                         ? 'bg-red-500 text-white shadow-[0_2px_10px_-2px_rgb(239_68_68/0.6)]'
@@ -297,7 +297,7 @@ function removeCourt() {
                 :aria-label="closing ? 'Confirm closing this call' : 'Close this call'"
                 @click="requestClose"
             >
-                <svg v-if="!closing" class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <svg v-if="!closing" class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                     <path stroke-linecap="round" d="M6 6l12 12M18 6L6 18" />
                 </svg>
                 {{ closing ? 'Close call?' : '' }}
@@ -305,12 +305,12 @@ function removeCourt() {
 
             <button
                 v-if="!match && !onDeck.length"
-                class="rounded-full p-1.5 text-charcoal-500 transition hover:bg-red-400/10 hover:text-red-300"
+                class="grid size-12 place-items-center rounded-full text-charcoal-500 transition hover:bg-red-400/10 hover:text-red-300"
                 title="Remove this court"
                 aria-label="Remove this court"
                 @click="removeCourt"
             >
-                <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                     <path stroke-linecap="round" d="M6 6l12 12M18 6L6 18" />
                 </svg>
             </button>
@@ -334,9 +334,11 @@ function removeCourt() {
                         </span>
                         <span class="text-lg font-black leading-none text-white">{{ team.score ?? 0 }}</span>
                     </div>
-                    <div class="flex items-center gap-1.5">
-                        <PlayerFace v-for="player in teamPlayers(team)" :key="player.id" :player="player" size="sm" />
-                        <p class="ml-auto truncate text-right text-[11px] font-bold text-white">
+                    <div class="flex flex-wrap items-center gap-1.5">
+                        <div class="flex -space-x-1.5">
+                            <PlayerFace v-for="player in teamPlayers(team)" :key="player.id" :player="player" size="sm" />
+                        </div>
+                        <p class="min-w-0 flex-1 break-words text-right text-xs font-bold leading-snug text-white">
                             {{ teamPlayers(team).map((p) => p.name.split(' ')[0]).join(' & ') }}
                         </p>
                     </div>
@@ -368,7 +370,7 @@ function removeCourt() {
                 <li
                     v-for="player in onDeck"
                     :key="player.id"
-                    class="flex items-center gap-2.5 rounded-xl border px-2.5 py-2 transition"
+                    class="flex flex-wrap items-center gap-2.5 rounded-xl border px-3 py-2 transition"
                     :class="
                         player.status === 'called'
                             ? 'border-volt-300/25 bg-volt-300/[0.06]'
@@ -377,20 +379,20 @@ function removeCourt() {
                 >
                     <PlayerFace :player="player" size="sm" />
                     <div class="min-w-0 flex-1">
-                        <p class="truncate text-xs font-semibold text-white">{{ player.name }}</p>
-                        <p class="text-[10px]" :class="player.status === 'called' ? 'text-volt-200/80' : 'text-emerald-300/90'">
+                        <p class="break-words text-sm font-semibold text-white">{{ player.name }}</p>
+                        <p class="text-xs" :class="player.status === 'called' ? 'text-volt-200/80' : 'text-emerald-300/90'">
                             {{ player.status === 'called' ? 'Awaiting confirm' : 'Confirmed — waiting for 4' }}
                         </p>
                     </div>
 
                     <!-- Change Player: substitute or defer -->
                     <button
-                        class="rounded-full p-1.5 text-charcoal-400 transition hover:bg-sky-400/15 hover:text-sky-200"
+                        class="grid size-12 place-items-center rounded-full text-charcoal-400 transition hover:bg-sky-400/15 hover:text-sky-200"
                         title="Change player — substitute or defer"
                         aria-label="Change player"
                         @click="openSwap(player)"
                     >
-                        <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4M17 8v12m0 0l4-4m-4 4l-4-4" />
                         </svg>
                     </button>
@@ -433,7 +435,7 @@ function removeCourt() {
                 </svg>
                 Randomize Court (4)
             </BaseButton>
-            <p v-if="randomizeHint" class="min-w-0 text-[10px] leading-tight text-charcoal-400">{{ randomizeHint }}</p>
+            <p v-if="randomizeHint" class="min-w-0 text-xs leading-tight text-charcoal-400">{{ randomizeHint }}</p>
         </div>
 
         <!-- Change Player modal -->
@@ -451,7 +453,7 @@ function removeCourt() {
                     >
                         <PlayerFace :player="player" size="sm" />
                         <span class="min-w-0 flex-1">
-                            <span class="block truncate text-sm font-semibold text-white">{{ player.name }}</span>
+                            <span class="block break-words text-base font-semibold text-white">{{ player.name }}</span>
                             <span class="text-[11px] text-charcoal-400">
                                 {{ player.wins }} win{{ player.wins === 1 ? '' : 's' }} · {{ player.gamesPlayed }} game{{ player.gamesPlayed === 1 ? '' : 's' }}
                             </span>
@@ -507,7 +509,7 @@ function removeCourt() {
                         <span
                             v-if="finishWinner === team.key"
                             class="rounded-full px-2 py-0.5 text-[9px] font-black uppercase tracking-wide"
-                            :class="i === 0 ? 'bg-volt-300 text-navy-950' : 'bg-sky-300 text-navy-950'"
+                            :class="i === 0 ? 'bg-volt-300 text-ink' : 'bg-sky-300 text-ink'"
                         >
                             Winner
                         </span>

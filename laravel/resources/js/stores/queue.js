@@ -83,6 +83,17 @@ export const useQueueStore = defineStore('queue', {
             await this.fetchQueue();
         },
 
+        /**
+         * Deep-link hydration: jump straight to a specific court, attach the
+         * real-time channel and pull its queue state before rendering.
+         * Used by /queue/{courtId} shared links on fresh sessions.
+         */
+        async activateCourt(courtId) {
+            this.activeCourtId = courtId;
+            this.subscribe();
+            await this.fetchQueue();
+        },
+
         /** Normalized queue entries (players + label flattened for rendering). */
         async fetchQueue() {
             if (!this.activeCourtId) {

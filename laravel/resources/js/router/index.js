@@ -42,6 +42,14 @@ const routes = [
         meta: { requiresAuth: true },
     },
     {
+        // Deep link: /queue/{courtId} — opens the queue dashboard focused on
+        // one specific court so a shared link hydrates the right line.
+        path: '/queue/:courtId',
+        name: 'queue.court',
+        component: () => import('../views/QueueDashboard.vue'),
+        meta: { requiresAuth: true },
+    },
+    {
         path: '/admin',
         name: 'admin',
         component: () => import('../views/AdminAnalytics.vue'),

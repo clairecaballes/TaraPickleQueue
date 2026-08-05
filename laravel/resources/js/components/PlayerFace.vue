@@ -66,7 +66,7 @@ function hideBrokenImage(event) {
         <!-- Always-visible corner badge on touch devices / when not hovering -->
         <span
             v-if="editable"
-            class="absolute -bottom-0.5 -right-0.5 grid size-4.5 place-items-center rounded-full bg-volt-300 text-navy-950 shadow"
+            class="absolute -bottom-0.5 -right-0.5 grid size-4.5 place-items-center rounded-full bg-volt-300 text-ink shadow"
             aria-hidden="true"
         >
             <svg class="size-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">

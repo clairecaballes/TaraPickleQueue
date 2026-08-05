@@ -41,11 +41,10 @@ export function queueCsv(queue) {
     const rows = leaderboard(queue);
 
     return toCsv(
-        ['Rank', 'Player', 'Skill', 'Wins', 'Games', 'Win %'],
+        ['Rank', 'Player', 'Wins', 'Games', 'Win %'],
         rows.map((player, index) => [
             index + 1,
             player.name,
-            player.skill ?? '',
             player.wins,
             player.gamesPlayed,
             `${winRate(player)}%`,
@@ -184,7 +183,6 @@ export function queuePng(queue) {
     ctx.textAlign = 'left';
     ctx.fillText('RANK', 56, boardTop + 28);
     ctx.fillText('PLAYER', 150, boardTop + 28);
-    ctx.fillText('SKILL', 560, boardTop + 28);
     ctx.textAlign = 'right';
     ctx.fillText('WINS', 850, boardTop + 28);
     ctx.fillText('GAMES', 910, boardTop + 28);
@@ -207,10 +205,6 @@ export function queuePng(queue) {
         ctx.fillStyle = '#ffffff';
         ctx.font = '600 16px "Instrument Sans", sans-serif';
         ctx.fillText(truncateText(ctx, row.name, 380), 150, y + 29);
-
-        ctx.fillStyle = row.skill === 'Advanced' ? '#fbbf24' : row.skill === 'Beginner' ? '#34d399' : row.skill ? '#ffd60a' : '#8b8b95';
-        ctx.textAlign = 'left';
-        ctx.fillText(row.skill ?? '—', 560, y + 29);
 
         ctx.fillStyle = '#ffd60a';
         ctx.font = '800 15px "Instrument Sans", sans-serif';
@@ -305,13 +299,12 @@ export function queuePdf(queue) {
             }).join('')}
         </div>
         <table>
-            <thead><tr><th>Rank</th><th>Player</th><th>Skill</th><th style="text-align:right">Wins</th><th style="text-align:right">Games</th><th style="text-align:right">Win %</th></tr></thead>
+            <thead><tr><th>Rank</th><th>Player</th><th style="text-align:right">Wins</th><th style="text-align:right">Games</th><th style="text-align:right">Win %</th></tr></thead>
             <tbody>
             ${rows.map((player, index) => `
                 <tr>
                     <td class="rank ${index === 0 ? 'r1' : index === 1 ? 'r2' : index === 2 ? 'r3' : 'rx'}">#${index + 1}</td>
                     <td style="font-weight:600">${esc(player.name)}</td>
-                    <td style="color:#b1b1b8">${player.skill ?? '—'}</td>
                     <td class="w">${player.wins}</td>
                     <td class="num">${player.gamesPlayed}</td>
                     <td class="num">${winRate(player)}%</td>

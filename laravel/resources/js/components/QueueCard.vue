@@ -11,7 +11,6 @@ import QueueShareModal from './QueueShareModal.vue';
 import Badge from './ui/Badge.vue';
 import BaseButton from './ui/BaseButton.vue';
 import BaseModal from './ui/BaseModal.vue';
-import SkillChip from './ui/SkillChip.vue';
 
 const props = defineProps({
     queue: { type: Object, required: true },
@@ -93,9 +92,10 @@ const leaderboard = computed(() =>
 );
 
 function rankClass(rank) {
-    if (rank === 1) return 'bg-volt-300 text-navy-950 shadow-[0_2px_10px_-2px_rgb(255_214_10/0.6)]';
-    if (rank === 2) return 'bg-charcoal-200 text-navy-950';
-    if (rank === 3) return 'bg-amber-500 text-navy-950';
+    // Rank 2 uses a constant silver so it stays legible in both themes.
+    if (rank === 1) return 'bg-volt-300 text-ink shadow-[0_2px_10px_-2px_rgb(255_214_10/0.6)]';
+    if (rank === 2) return 'bg-[#d0d0d4] text-ink';
+    if (rank === 3) return 'bg-amber-500 text-ink';
     return 'bg-white/10 text-charcoal-300';
 }
 
@@ -204,11 +204,11 @@ const confirmingDelete = ref(false);
         :class="anyLive ? 'border-volt-300/30 shadow-glow' : 'hover:border-white/20'"
     >
         <!-- Header -->
-        <header class="flex flex-wrap items-center gap-2 border-b border-white/10 px-3 py-3 sm:px-4">
+        <header class="flex flex-wrap items-center gap-3 border-b border-white/10 px-3 py-3 sm:px-4">
             <!-- Expand / collapse chevron -->
             <button
                 type="button"
-                class="grid size-9 shrink-0 place-items-center rounded-full transition hover:bg-white/10"
+                class="grid size-12 shrink-0 place-items-center rounded-full transition hover:bg-white/10"
                 :title="expanded ? 'Collapse queue' : 'Expand queue'"
                 :aria-label="expanded ? 'Collapse queue' : 'Expand queue'"
                 :aria-expanded="expanded"
@@ -243,11 +243,11 @@ const confirmingDelete = ref(false);
                 </div>
 
                 <div class="min-w-0">
-                    <h3 class="flex items-center gap-2 truncate text-base font-black tracking-tight text-white">
+                    <h3 class="flex flex-wrap items-center gap-2 break-words text-lg font-black leading-snug tracking-tight text-white">
                         {{ queue.name }}
                         <Badge v-if="!queue.open" color="gray" size="sm">Closed</Badge>
                     </h3>
-                    <p class="truncate text-xs text-charcoal-400">
+                    <p class="break-words text-xs text-charcoal-400">
                         Created {{ createdLabel }} · {{ queue.players.length }} player{{ queue.players.length === 1 ? '' : 's' }} ·
                         {{ queue.courts.length }} court{{ queue.courts.length === 1 ? '' : 's' }}
                     </p>
@@ -258,7 +258,7 @@ const confirmingDelete = ref(false);
 
             <!-- Share this queue -->
             <button
-                class="rounded-full p-2 text-charcoal-400 transition hover:bg-sky-400/10 hover:text-sky-200"
+                class="grid size-12 place-items-center rounded-full text-charcoal-400 transition hover:bg-sky-400/10 hover:text-sky-200"
                 title="Share this queue"
                 aria-label="Share this queue"
                 @click="openShare"
@@ -271,7 +271,7 @@ const confirmingDelete = ref(false);
             <!-- Snapshot: PNG / PDF / CSV -->
             <div class="relative">
                 <button
-                    class="rounded-full p-2 text-charcoal-400 transition hover:bg-volt-300/10 hover:text-volt-200"
+                    class="grid size-12 place-items-center rounded-full text-charcoal-400 transition hover:bg-volt-300/10 hover:text-volt-200"
                     title="Snapshot this queue — PNG, PDF or CSV"
                     aria-label="Snapshot this queue"
                     @click="snapshotOpen = !snapshotOpen"
@@ -292,19 +292,19 @@ const confirmingDelete = ref(false);
                         class="absolute right-0 top-full z-30 mt-2 w-48 overflow-hidden rounded-xl border border-white/10 bg-navy-900 p-1.5 shadow-2xl"
                     >
                         <button
-                            class="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm font-semibold text-white transition hover:bg-white/10"
+                            class="flex min-h-12 w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm font-semibold text-white transition hover:bg-white/10"
                             @click="exportPng"
                         >
                             <span class="text-base">📸</span> PNG snapshot
                         </button>
                         <button
-                            class="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm font-semibold text-white transition hover:bg-white/10"
+                            class="flex min-h-12 w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm font-semibold text-white transition hover:bg-white/10"
                             @click="exportPdf"
                         >
                             <span class="text-base">📄</span> PDF (print / save)
                         </button>
                         <button
-                            class="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm font-semibold text-white transition hover:bg-white/10"
+                            class="flex min-h-12 w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm font-semibold text-white transition hover:bg-white/10"
                             @click="exportCsv"
                         >
                             <span class="text-base">📊</span> CSV results
@@ -315,7 +315,7 @@ const confirmingDelete = ref(false);
 
             <!-- Scan to view this queue -->
             <button
-                class="rounded-full p-2 text-charcoal-400 transition hover:bg-volt-300/10 hover:text-volt-200"
+                class="grid size-12 place-items-center rounded-full text-charcoal-400 transition hover:bg-volt-300/10 hover:text-volt-200"
                 title="Scan to view this queue — live on-deck board"
                 aria-label="Scan to view this queue"
                 @click="qrOpen = true"
@@ -353,13 +353,13 @@ const confirmingDelete = ref(false);
                 >
                     <span class="text-xs font-semibold text-red-200">Delete this queue?</span>
                     <button
-                        class="rounded-full bg-red-500 px-2.5 py-1 text-[11px] font-bold text-white transition hover:bg-red-400"
+                        class="min-h-12 min-w-12 rounded-full bg-red-500 px-3 py-1.5 text-sm font-bold text-white transition hover:bg-red-400"
                         @click="store.deleteQueue(queue.id)"
                     >
                         Delete
                     </button>
                     <button
-                        class="rounded-full px-2 py-1 text-[11px] font-semibold text-charcoal-300 transition hover:bg-white/10 hover:text-white"
+                        class="min-h-12 min-w-12 rounded-full px-3 py-1.5 text-sm font-semibold text-charcoal-300 transition hover:bg-white/10 hover:text-white"
                         @click="confirmingDelete = false"
                     >
                         Keep
@@ -369,7 +369,7 @@ const confirmingDelete = ref(false);
 
             <button
                 v-if="!confirmingDelete"
-                class="rounded-full p-2 text-charcoal-400 transition hover:bg-red-400/10 hover:text-red-300"
+                class="grid size-12 place-items-center rounded-full text-charcoal-400 transition hover:bg-red-400/10 hover:text-red-300"
                 title="Delete queue"
                 aria-label="Delete queue"
                 @click="confirmingDelete = true"
@@ -424,7 +424,7 @@ const confirmingDelete = ref(false);
                             type="text"
                             maxlength="40"
                             placeholder="Player name… (guest, no sign-up)"
-                            class="w-full rounded-full border border-white/10 bg-navy-950/60 py-2.5 pl-10 pr-4 text-sm text-white placeholder-charcoal-500 transition focus:border-volt-300/60 focus:outline-none focus:ring-2 focus:ring-volt-300/20"
+                            class="w-full rounded-full border border-white/10 bg-navy-950/60 py-3 pl-10 pr-4 text-base text-white placeholder-charcoal-500 transition focus:border-volt-300/60 focus:outline-none focus:ring-2 focus:ring-volt-300/20"
                             @keydown.enter.prevent="addPlayer"
                         />
                     </div>
@@ -521,7 +521,7 @@ const confirmingDelete = ref(false);
                             <PlayerFace :player="player" size="md" editable @edit="openPicker" />
 
                             <div class="min-w-0 flex-1">
-                                <p class="flex items-center gap-1.5 truncate text-sm font-semibold text-white">
+                                <p class="flex flex-wrap items-center gap-1.5 break-words text-base font-semibold text-white">
                                     {{ player.name }}
                                     <span
                                         v-if="player.fixedPairId"
@@ -543,7 +543,7 @@ const confirmingDelete = ref(false);
                             <!-- Skill rating tag -->
                             <select
                                 :value="player.skill ?? ''"
-                                class="rounded-full border border-white/10 bg-navy-950/70 px-2.5 py-1.5 text-[11px] font-semibold text-charcoal-200 transition focus:border-volt-300/60 focus:outline-none"
+                                class="min-h-12 rounded-full border border-white/10 bg-navy-950/70 px-3 py-2 text-sm font-semibold text-charcoal-200 transition focus:border-volt-300/60 focus:outline-none"
                                 :title="`Set ${player.name}'s skill rating`"
                                 @change="setSkill(player, $event)"
                             >
@@ -555,7 +555,7 @@ const confirmingDelete = ref(false);
 
                             <!-- Fixed pair -->
                             <button
-                                class="rounded-full p-2 transition"
+                                class="grid size-12 place-items-center rounded-full transition"
                                 :class="
                                     player.fixedPairId
                                         ? 'bg-sky-400/15 text-sky-200 ring-1 ring-sky-400/40'
@@ -565,14 +565,14 @@ const confirmingDelete = ref(false);
                                 :aria-label="player.fixedPairId ? 'Clear fixed pair' : 'Tag fixed pair'"
                                 @click="player.fixedPairId ? unpair(player) : openPair(player)"
                             >
-                                <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 13.5a4 4 0 015.7 0l2.3 2.3a4 4 0 01-5.7 5.7l-1-1M13.5 10.5a4 4 0 00-5.7 0l-2.3 2.3a4 4 0 005.7 5.7l1-1" />
                                 </svg>
                             </button>
 
                             <!-- Pause / BRB -->
                             <button
-                                class="rounded-full p-2 transition"
+                                class="grid size-12 place-items-center rounded-full transition"
                                 :class="
                                     player.paused
                                         ? 'bg-volt-300/15 text-volt-200 ring-1 ring-volt-300/40'
@@ -582,7 +582,7 @@ const confirmingDelete = ref(false);
                                 :aria-label="player.paused ? 'Resume player' : 'Pause player'"
                                 @click="togglePause(player)"
                             >
-                                <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <path v-if="player.paused" stroke-linecap="round" stroke-linejoin="round" d="M12 8v5l3 2" />
                                     <circle v-else-if="!player.paused" cx="12" cy="12" r="9" />
                                     <path v-else stroke-linecap="round" d="M12 7v5l3 2" />
@@ -590,12 +590,12 @@ const confirmingDelete = ref(false);
                             </button>
 
                             <button
-                                class="rounded-full p-1.5 text-charcoal-500 transition hover:bg-red-400/10 hover:text-red-300"
+                                class="grid size-12 place-items-center rounded-full text-charcoal-500 transition hover:bg-red-400/10 hover:text-red-300"
                                 title="Remove from queue"
                                 aria-label="Remove from queue"
                                 @click="remove(player)"
                             >
-                                <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <path stroke-linecap="round" d="M6 6l12 12M18 6L6 18" />
                                 </svg>
                             </button>
@@ -617,12 +617,11 @@ const confirmingDelete = ref(false);
                 </div>
 
                 <div class="overflow-x-auto rounded-xl border border-white/10">
-                    <table class="w-full min-w-[300px] text-sm">
+                    <table class="w-full text-sm">
                         <thead>
                             <tr class="border-b border-white/10 bg-navy-950/40 text-[10px] uppercase tracking-wider text-charcoal-400">
                                 <th class="px-3 py-2 text-left font-semibold">#</th>
                                 <th class="px-2 py-2 text-left font-semibold">Player</th>
-                                <th class="px-2 py-2 text-left font-semibold">Level</th>
                                 <th class="px-2 py-2 text-right font-semibold">Wins</th>
                                 <th class="px-2 py-2 text-right font-semibold">Games</th>
                                 <th class="px-3 py-2 text-right font-semibold">Win %</th>
@@ -641,12 +640,8 @@ const confirmingDelete = ref(false);
                                 <td class="px-2 py-2">
                                     <div class="flex items-center gap-2">
                                         <PlayerFace :player="row" size="sm" editable @edit="openPicker" />
-                                        <span class="truncate text-xs font-semibold text-white">{{ row.name }}</span>
+                                        <span class="min-w-0 break-words text-sm font-semibold text-white">{{ row.name }}</span>
                                     </div>
-                                </td>
-                                <td class="px-2 py-2">
-                                    <SkillChip v-if="row.skill" :skill="row.skill" />
-                                    <span v-else class="text-xs text-charcoal-500">—</span>
                                 </td>
                                 <td class="px-2 py-2 text-right font-black text-volt-300">{{ row.wins }}</td>
                                 <td class="px-2 py-2 text-right text-xs text-charcoal-300">{{ row.gamesPlayed }}</td>
@@ -695,7 +690,7 @@ const confirmingDelete = ref(false);
                     >
                         <PlayerFace :player="player" size="sm" />
                         <span class="min-w-0 flex-1">
-                            <span class="block truncate text-sm font-semibold text-white">{{ player.name }}</span>
+                            <span class="block break-words text-base font-semibold text-white">{{ player.name }}</span>
                             <span class="text-[11px] text-charcoal-400">
                                 {{ player.wins }} win{{ player.wins === 1 ? '' : 's' }} · {{ player.gamesPlayed }} game{{ player.gamesPlayed === 1 ? '' : 's' }}
                             </span>

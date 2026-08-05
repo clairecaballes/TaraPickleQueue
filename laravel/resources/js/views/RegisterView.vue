@@ -62,7 +62,7 @@ async function submit() {
         <div class="w-full max-w-md">
             <div class="mb-8 text-center">
                 <div class="mx-auto mb-4 grid size-14 place-items-center rounded-2xl bg-volt-300">
-                    <svg class="size-8 text-navy-950" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <svg class="size-8 text-ink" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <circle cx="8" cy="6" r="3" />
                         <circle cx="16" cy="8" r="2.5" />
                         <circle cx="8" cy="18" r="2.5" />

@@ -38,6 +38,10 @@
     --color-navy-900: #12203a;
     --color-navy-950: #0b1426;
 
+    /* Constant dark ink — text sitting on Volt/amber fills. Stays near-black
+       in BOTH themes so primary buttons keep their contrast in sunlight. */
+    --color-ink: #0b1426;
+
     /* Charcoal */
     --color-charcoal-50: #f5f5f6;
     --color-charcoal-100: #e6e6e8;
@@ -132,6 +136,118 @@
 .page-leave-to {
     opacity: 0;
     transform: translateY(-14px);
+}
+
+/* ------------------------------------------------------------------ *
+ * Outdoor Daylight — high-contrast theme for playing in the sun.
+ *
+ * Tailwind v4 utilities read their colors from these CSS variables, so
+ * remapping the palette inside [data-theme='daylight'] re-themes every
+ * component at once: light surfaces, near-black ink text, darker accent
+ * hues that stay legible on a bright phone screen.
+ * ------------------------------------------------------------------ */
+html[data-theme='daylight'] {
+    color-scheme: light;
+
+    /* Light surfaces */
+    --color-navy-50: #ffffff;
+    --color-navy-100: #f8fafd;
+    --color-navy-200: #f0f4f9;
+    --color-navy-300: #e4ebf4;
+    --color-navy-400: #d4dfec;
+    --color-navy-500: #bfcfe2;
+    --color-navy-600: #b4c6dc;
+    --color-navy-700: #e9eff7;
+    --color-navy-800: #f4f7fb;
+    --color-navy-900: #ffffff;
+    --color-navy-950: #eef2f8;
+
+    /* Dark ink text (text-white / charcoal are inverted to dark grays) */
+    --color-white: #101828;
+    --color-charcoal-50: #0f172a;
+    --color-charcoal-100: #1f2937;
+    --color-charcoal-200: #374151;
+    --color-charcoal-300: #4b5563;
+    --color-charcoal-400: #6b7280;
+    --color-charcoal-500: #8b93a1;
+    --color-charcoal-600: #a2aab8;
+    --color-charcoal-700: #b7bfcb;
+    --color-charcoal-800: #cdd4de;
+    --color-charcoal-900: #e4e8ef;
+    --color-charcoal-950: #f3f5f9;
+
+    /* Deepened accent hues — readable on white instead of on navy */
+    --color-volt-50: #fff8e6;
+    --color-volt-100: #8a5a00;
+    --color-volt-200: #8f6a00;
+    --color-volt-300: #b8860b;
+    --color-volt-400: #c9960c;
+    --color-volt-500: #a37509;
+    --color-volt-600: #7a5606;
+
+    --color-emerald-100: #065f46;
+    --color-emerald-200: #047857;
+    --color-emerald-300: #059669;
+    --color-emerald-400: #10b981;
+    --color-sky-100: #075985;
+    --color-sky-200: #0369a1;
+    --color-sky-300: #0284c7;
+    --color-sky-400: #0ea5e9;
+    --color-amber-300: #b45309;
+    --color-amber-400: #d97706;
+    --color-amber-500: #f59e0b;
+    --color-red-100: #991b1b;
+    --color-red-200: #b91c1c;
+    --color-red-300: #dc2626;
+    --color-red-400: #ef4444;
+    --color-red-500: #f87171;
+
+    --shadow-card: 0 1px 2px rgb(15 23 42 / 0.06), 0 8px 24px -8px rgb(15 23 42 / 0.14);
+    --shadow-glow: 0 0 0 1px rgb(184 134 11 / 0.45), 0 8px 30px -6px rgb(184 134 11 / 0.4);
+}
+
+html[data-theme='daylight'] body {
+    background-image: radial-gradient(1200px 500px at 85% -10%, rgb(66 105 154 / 0.16), transparent 60%),
+        radial-gradient(900px 420px at -10% 110%, rgb(184 134 11 / 0.12), transparent 55%);
+}
+
+html[data-theme='daylight'] ::selection {
+    background: rgb(255 214 10 / 0.9);
+    color: #0b1426;
+}
+
+/* The QR code frame is always white so the code scans cleanly in the sun. */
+html[data-theme='daylight'] .qr-frame {
+    background-color: #ffffff !important;
+}
+
+/* Decorative pickleball dots must stay dark on the light volt balls. */
+html[data-theme='daylight'] .pickle-dot {
+    background-color: rgb(11 20 38 / 0.72) !important;
+}
+
+/* ------------------------------------------------------------------ *
+ * Mobile typography
+ * ------------------------------------------------------------------ */
+
+/* Fluid display type — large titles shrink smoothly on narrow phones instead
+   of wrapping awkwardly (min ~22px @ 320px, max 28px on bigger screens). */
+@utility fluid-display {
+    font-size: clamp(1.375rem, 1.15rem + 1.2vw, 1.75rem);
+}
+
+@utility fluid-sub {
+    font-size: clamp(1.05rem, 1rem + 0.8vw, 1.25rem);
+}
+
+/* On phones, force form controls to 16px so iOS never auto-zooms on focus
+   and inputs/buttons stay comfortably readable outdoors. */
+@media (max-width: 480px) {
+    input,
+    select,
+    textarea {
+        font-size: 16px !important;
+    }
 }
 
 /* Respect users who prefer reduced motion */

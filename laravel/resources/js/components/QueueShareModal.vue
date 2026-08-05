@@ -61,7 +61,7 @@ async function copyLink() {
         <div class="grid gap-5 sm:grid-cols-[auto_1fr]">
             <!-- QR -->
             <div class="flex flex-col items-center gap-3">
-                <div class="rounded-2xl border border-white/10 bg-white p-3 shadow-card">
+                <div class="qr-frame rounded-2xl border border-white/10 bg-white p-3 shadow-card">
                     <img
                         :src="qrImageUrl"
                         :alt="`QR code for ${queue.name}`"
@@ -102,12 +102,12 @@ async function copyLink() {
                         >
                             <div class="flex items-center gap-2">
                                 <span
-                                    class="inline-grid size-6 shrink-0 place-items-center rounded-md text-[11px] font-black text-navy-950"
-                                    :class="row.live ? 'animate-pulse bg-volt-300' : 'bg-white/15 text-white'"
+                                    class="inline-grid size-8 shrink-0 place-items-center rounded-md text-sm font-black"
+                                    :class="row.live ? 'animate-pulse bg-volt-300 text-ink' : 'bg-charcoal-800/50 text-charcoal-50'"
                                 >
                                     {{ row.court.label.replace('Court ', '') }}
                                 </span>
-                                <span class="truncate text-sm font-bold text-white">{{ row.court.label }}</span>
+                                <span class="min-w-0 flex-1 break-words text-sm font-bold text-white">{{ row.court.label }}</span>
                                 <Badge v-if="row.live" color="green" size="sm" dot>LIVE</Badge>
                                 <Badge v-else-if="row.onDeck.length" color="volt" size="sm" dot>
                                     {{ row.onDeck.length }} on deck
@@ -141,13 +141,13 @@ async function copyLink() {
                             class="flex items-center gap-2.5 rounded-lg bg-white/[0.03] px-2.5 py-1.5"
                         >
                             <span
-                                class="grid size-5 shrink-0 place-items-center rounded-full text-[10px] font-black"
-                                :class="index === 0 ? 'bg-volt-300 text-navy-950' : 'bg-white/10 text-charcoal-200'"
+                                class="grid size-6 shrink-0 place-items-center rounded-full text-[11px] font-black"
+                                :class="index === 0 ? 'bg-volt-300 text-ink' : 'bg-white/10 text-charcoal-200'"
                             >
                                 {{ index + 1 }}
                             </span>
                             <PlayerFace :player="player" size="sm" />
-                            <span class="min-w-0 flex-1 truncate text-xs font-semibold text-white">
+                            <span class="min-w-0 flex-1 break-words text-sm font-semibold text-white">
                                 {{ player.name }}
                             </span>
                             <span

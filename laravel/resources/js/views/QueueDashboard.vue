@@ -1,6 +1,6 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { storeToRefs } from 'pinia';
 
 import { errorMessage } from '../api/http';
@@ -13,9 +13,11 @@ import PlayerAvatar from '../components/ui/PlayerAvatar.vue';
 import { useAuthStore } from '../stores/auth';
 import { useQueueStore } from '../stores/queue';
 import { elapsedSince, formatDuration, ordinal } from '../utils/format';
+import { getTheme, toggleTheme } from '../utils/theme';
 
 const auth = useAuthStore();
 const queue = useQueueStore();
+const route = useRoute();
 const router = useRouter();
 
 const { courts, activeCourtId, waitingEntries, calledEntries, myEntries, groups } = storeToRefs(queue);
@@ -26,15 +28,122 @@ const { courts, activeCourtId, waitingEntries, calledEntries, myEntries, groups 
 const now = ref(Date.now());
 let timer = null;
 
+/* ------------------------------------------------------------------ *
+ * Outdoor Daylight theme toggle
+ * ------------------------------------------------------------------ */
+const daylight = ref(getTheme() === 'daylight');
+
+function toggleThemeMode() {
+    daylight.value = toggleTheme() === 'daylight';
+}
+
+/* ------------------------------------------------------------------ *
+ * Deep-link hydration + real-time + polling fallback.
+ *
+ * Shared links carry the court id in the URL (/queue/{courtId}) so a fresh
+ * mobile session hydrates the right line immediately, subscribes to that
+ * court's real-time channel, and keeps a light polling fallback running in
+ * case WebSockets stall (background tab, weak signal on the court).
+ * ------------------------------------------------------------------ */
+const POLL_MS = 10_000;
+let pollTimer = null;
+
+const refreshing = ref(false);
+
+/**
+ * Pull the latest queue + courts. The manual button shows a spinner; the
+ * silent polling path (every 10s) never toggles it, so the header icon
+ * doesn't spin on background ticks.
+ */
+async function refreshNow({ silent = false } = {}) {
+    if (!silent) {
+        if (refreshing.value) {
+            return;
+        }
+
+        refreshing.value = true;
+    }
+
+    try {
+        await Promise.all([queue.fetchQueue(), queue.fetchCourts()]);
+    } catch {
+        // Polling retries automatically — never surface noise mid-game.
+    } finally {
+        if (!silent) {
+            refreshing.value = false;
+        }
+    }
+}
+
+function startPolling() {
+    window.clearInterval(pollTimer);
+    pollTimer = window.setInterval(() => refreshNow({ silent: true }), POLL_MS);
+}
+
+function onVisible() {
+    if (!document.hidden) {
+        queue.fetchQueue();
+        queue.fetchCourts();
+    }
+}
+
 onMounted(async () => {
     timer = window.setInterval(() => {
         now.value = Date.now();
     }, 1000);
 
+    // 1) Hydrate the deep-linked court (if any) before the courts load so
+    //    fetchCourts() never overrides it with the first court.
+    const courtId = Number(route.params.courtId);
+
+    if (Number.isInteger(courtId) && courtId > 0) {
+        await queue.activateCourt(courtId);
+    }
+
+    // 2) Pull the full picture, then sanity-check the deep link.
     await Promise.all([queue.fetchCourts(), queue.fetchGroups()]);
+
+    if (route.params.courtId) {
+        const exists = courts.value.some((court) => court.id === courtId);
+
+        // Stale/removed court in a shared link — fall back to the first one.
+        if (!exists && courts.value.length) {
+            await queue.setActiveCourt(courts.value[0].id);
+        }
+    }
+
+    // 3) Real-time channel was attached by activateCourt()/fetchCourts() —
+    //    the polling loop is the safety net, not the primary source.
+    startPolling();
+    window.addEventListener('visibilitychange', onVisible);
 });
 
-onBeforeUnmount(() => window.clearInterval(timer));
+// Navigating between two shared links (/queue/3 → /queue/5) reuses this
+// component, so watch the param and rehydrate instead of waiting for a remount.
+watch(
+    () => route.params.courtId,
+    async (courtId) => {
+        const id = Number(courtId);
+
+        if (!Number.isInteger(id) || id <= 0) {
+            return;
+        }
+
+        await queue.activateCourt(id);
+
+        const exists = courts.value.some((court) => court.id === id);
+
+        if (!exists && courts.value.length) {
+            await queue.setActiveCourt(courts.value[0].id);
+        }
+    },
+);
+
+onBeforeUnmount(() => {
+    window.clearInterval(timer);
+    window.clearInterval(pollTimer);
+    window.removeEventListener('visibilitychange', onVisible);
+});
 
 const activeCourt = computed(
     () => courts.value.find((court) => court.id === activeCourtId.value) ?? null,
@@ -42,6 +151,9 @@ const activeCourt = computed(
 
 const matchElapsed = (court) =>
     court?.current_match?.started_at ? formatDuration(elapsedSince(court.current_match.started_at, now.value)) : '';
+
+/** Called entries belonging to one court card (the "on deck" team). */
+const courtOnDeck = (court) => calledEntries.value.filter((entry) => entry.court_id === court.id);
 
 /** A queue entry that the current user is part of and that is "called". */
 const myTurnEntry = computed(() => myEntries.value.find((entry) => entry.status === 'called') ?? null);
@@ -147,38 +259,80 @@ const isMyEntry = (entry) => Array.isArray(entry?.players) && entry.players.some
     <div class="min-h-screen pb-16">
         <!-- Header -->
         <header class="sticky top-0 z-40 border-b border-white/10 bg-navy-950/85 backdrop-blur-md">
-            <div class="mx-auto flex max-w-6xl items-center justify-between px-4 py-3.5">
-                <div class="flex items-center gap-2.5">
-                    <div class="grid size-9 place-items-center rounded-xl bg-volt-300">
-                        <svg class="size-5 text-navy-950" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <div class="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-3.5">
+                <div class="flex min-w-0 items-center gap-2.5">
+                    <div class="grid size-11 shrink-0 place-items-center rounded-xl bg-volt-300">
+                        <svg class="size-5 text-ink" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <circle cx="8" cy="6" r="3" />
                             <circle cx="16" cy="8" r="2.5" />
                             <circle cx="8" cy="18" r="2.5" />
                             <path stroke-linecap="round" d="M10.5 6h3.5a3 3 0 013 3v0M12 18h3a2 2 0 002-2v-6" />
                         </svg>
                     </div>
-                    <span class="text-lg font-black tracking-tight text-white">TaraPickle</span>
+                    <span class="whitespace-nowrap text-lg font-black tracking-tight text-white">TaraPickle</span>
                 </div>
 
-                <div class="flex items-center gap-3">
+                <div class="flex shrink-0 items-center gap-3">
                     <button
                         v-if="auth.isAdmin"
-                        class="rounded-full border border-white/10 px-3 py-1.5 text-xs font-semibold text-charcoal-200 transition hover:border-volt-300/40 hover:text-volt-200"
+                        class="min-h-12 rounded-full border border-white/10 px-4 py-2 text-sm font-semibold text-charcoal-200 transition hover:border-volt-300/40 hover:text-volt-200"
                         @click="router.push('/admin')"
                     >
                         Court control
                     </button>
 
+                    <!-- Outdoor Daylight toggle -->
+                    <button
+                        class="grid size-12 place-items-center rounded-full transition"
+                        :class="
+                            daylight
+                                ? 'bg-volt-300/15 text-volt-200 ring-1 ring-volt-300/40'
+                                : 'text-charcoal-300 hover:bg-white/10 hover:text-white'
+                        "
+                        :title="daylight ? 'Switch to dark theme' : 'Switch to Outdoor Daylight (high contrast)'"
+                        :aria-label="daylight ? 'Switch to dark theme' : 'Switch to Outdoor Daylight'"
+                        :aria-pressed="daylight"
+                        @click="toggleThemeMode"
+                    >
+                        <svg v-if="daylight" class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="4" />
+                            <path stroke-linecap="round" d="M12 2v2m0 16v2M4.9 4.9l1.4 1.4m11.4 11.4l1.4 1.4M2 12h2m16 0h2M4.9 19.1l1.4-1.4m11.4-11.4l1.4-1.4" />
+                        </svg>
+                        <svg v-else class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.36 6.36l-.7-.7M6.34 6.34l-.7-.7m12.72 0l-.7.7M6.34 17.66l-.7.7M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                        </svg>
+                    </button>
+
+                    <!-- Manual refresh (min 48x48px) — pull the latest state when
+                         the phone loses signal or WebSockets stall. -->
+                    <button
+                        class="grid size-12 place-items-center rounded-full text-charcoal-300 transition hover:bg-white/10 hover:text-white"
+                        title="Refresh queue"
+                        aria-label="Refresh queue"
+                        @click="refreshNow"
+                    >
+                        <svg
+                            class="size-5"
+                            :class="refreshing ? 'animate-spin' : ''"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                        >
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h5M20 20v-5h-5M5.5 9a7 7 0 0111.8-2.3M18.5 15a7 7 0 01-11.8 2.3" />
+                        </svg>
+                    </button>
+
                     <div class="flex items-center gap-2.5">
                         <PlayerAvatar :player="auth.user" size="sm" />
-                        <span class="hidden text-sm font-semibold text-white sm:block">{{ auth.user?.name }}</span>
+                        <span class="hidden whitespace-nowrap text-sm font-semibold text-white sm:block">{{ auth.user?.name }}</span>
                         <button
-                            class="rounded-full p-2 text-charcoal-300 transition hover:bg-white/10 hover:text-white"
+                            class="grid size-12 place-items-center rounded-full text-charcoal-300 transition hover:bg-white/10 hover:text-white"
                             title="Sign out"
                             aria-label="Sign out"
                             @click="logout"
                         >
-                            <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M15 12H3m0 0l4-4m-4 4l4 4M10 5V3h10v18H10v-2" />
                             </svg>
                         </button>
@@ -201,12 +355,12 @@ const isMyEntry = (entry) => Array.isArray(entry?.players) && entry.players.some
                     class="flex flex-wrap items-center gap-4 rounded-2xl border border-volt-300/40 bg-volt-300/15 px-5 py-4 shadow-glow"
                 >
                     <div class="grid size-11 shrink-0 animate-pulse place-items-center rounded-full bg-volt-300">
-                        <svg class="size-6 text-navy-950" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <svg class="size-6 text-ink" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M17.25 8.25L21 12l-3.75 3.75M3 12h13.5M12 3.75c.75 1.5 2.25 4.5 2.25 8.25s-1.5 6.75-2.25 8.25c-.75-1.5-2.25-4.5-2.25-8.25S11.25 5.25 12 3.75z" />
                         </svg>
                     </div>
                     <div class="min-w-0 flex-1">
-                        <h2 class="text-lg font-black text-white">
+                        <h2 class="fluid-display font-black text-white">
                             {{ myTurnCourt?.name ?? 'Court' }} ready for you!
                         </h2>
                         <p class="text-sm text-volt-100/90">
@@ -223,7 +377,7 @@ const isMyEntry = (entry) => Array.isArray(entry?.players) && entry.players.some
             <section>
                 <div class="mb-4 flex items-end justify-between">
                     <div>
-                        <h1 class="text-2xl font-black tracking-tight text-white">Active courts</h1>
+                        <h1 class="fluid-display font-black tracking-tight text-white">Active courts</h1>
                         <p class="text-sm text-charcoal-300">Live matches and the players dinking on them right now.</p>
                     </div>
                 </div>
@@ -237,40 +391,54 @@ const isMyEntry = (entry) => Array.isArray(entry?.players) && entry.players.some
                         :class="court.id === activeCourtId && 'border-volt-300/40 ring-1 ring-volt-300/30'"
                     >
                         <div class="mb-3 flex items-start justify-between gap-2">
-                            <div>
-                                <h3 class="font-bold text-white">{{ court.name }}</h3>
+                            <div class="min-w-0">
+                                <h3 class="break-words text-base font-black text-white">{{ court.name }}</h3>
                                 <p class="text-xs text-charcoal-300">{{ court.location }}</p>
                             </div>
-                            <div class="flex flex-col items-end gap-1.5">
+                            <div class="flex shrink-0 flex-col items-end gap-1.5">
                                 <Badge :color="court.play_type === 'singles' ? 'navy' : 'volt'" size="sm">
                                     {{ court.play_type }}
                                 </Badge>
-                                <Badge v-if="court.current_match" color="green" size="sm" dot>LIVE</Badge>
+                                <Badge v-if="court.current_match" color="green" size="sm" dot>In Play</Badge>
+                                <Badge v-else color="gray" size="sm">Empty</Badge>
                             </div>
                         </div>
 
                         <div v-if="court.current_match" class="space-y-2">
+                            <!-- Two clearly separated teams: Team A vs Team B -->
                             <div class="grid grid-cols-2 gap-2">
                                 <div
                                     v-for="(team, i) in court.current_match.teams"
                                     :key="team.id"
-                                    class="flex items-center gap-2 rounded-xl bg-navy-950/50 px-3 py-2"
+                                    class="rounded-xl border px-3 py-2.5"
+                                    :class="i === 0 ? 'border-volt-300/30 bg-volt-300/[0.07]' : 'border-sky-400/30 bg-sky-400/[0.07]'"
                                 >
-                                    <div class="flex -space-x-1.5">
-                                        <PlayerAvatar
-                                            v-for="player in team.players"
-                                            :key="player.id"
-                                            :player="player"
-                                            size="sm"
-                                        />
+                                    <div class="mb-1.5 flex items-center justify-between gap-1">
+                                        <span
+                                            class="text-[10px] font-black uppercase tracking-wider"
+                                            :class="i === 0 ? 'text-volt-200' : 'text-sky-200'"
+                                        >
+                                            Team {{ i === 0 ? 'A' : 'B' }}
+                                        </span>
+                                        <span class="text-lg font-black leading-none text-white">{{ team.score }}</span>
                                     </div>
-                                    <div class="ml-auto text-right">
-                                        <div class="text-lg font-black leading-none text-white">{{ team.score }}</div>
-                                        <div class="text-[10px] uppercase tracking-wide text-charcoal-400">team {{ i === 0 ? 'A' : 'B' }}</div>
+                                    <div class="flex flex-wrap items-center gap-1.5">
+                                        <div class="flex -space-x-1.5">
+                                            <PlayerAvatar
+                                                v-for="player in team.players"
+                                                :key="player.id"
+                                                :player="player"
+                                                size="sm"
+                                            />
+                                        </div>
+                                        <p class="min-w-0 flex-1 break-words text-sm font-semibold leading-tight text-white">
+                                            {{ team.players.map((player) => player.name).join(' & ') }}
+                                        </p>
                                     </div>
                                 </div>
                             </div>
-                            <div class="flex items-center justify-between text-xs">
+
+                            <div class="flex flex-wrap items-center justify-between gap-2 text-xs">
                                 <span class="inline-flex items-center gap-1.5 font-mono text-charcoal-200">
                                     <svg class="size-3.5 text-volt-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                         <circle cx="12" cy="12" r="9" />
@@ -279,6 +447,23 @@ const isMyEntry = (entry) => Array.isArray(entry?.players) && entry.players.some
                                     {{ matchElapsed(court) }}
                                 </span>
                                 <Badge color="gray" size="sm">{{ court.waiting_count }} waiting</Badge>
+                            </div>
+
+                            <!-- On deck (up next) below the active players -->
+                            <div v-if="courtOnDeck(court).length" class="rounded-xl border border-volt-300/25 bg-volt-300/[0.05] px-3 py-2">
+                                <p class="mb-1 text-[10px] font-black uppercase tracking-wider text-volt-200">On deck — up next</p>
+                                <div class="space-y-1">
+                                    <p
+                                        v-for="entry in courtOnDeck(court)"
+                                        :key="entry.id"
+                                        class="break-words text-sm font-semibold leading-snug text-white"
+                                    >
+                                        {{ entry.label }}
+                                        <span class="font-normal text-volt-100/80">
+                                            · {{ entry.players_count }} player{{ entry.players_count === 1 ? '' : 's' }}
+                                        </span>
+                                    </p>
+                                </div>
                             </div>
                         </div>
 
@@ -309,17 +494,17 @@ const isMyEntry = (entry) => Array.isArray(entry?.players) && entry.players.some
             <section>
                 <div class="mb-4 flex items-center justify-between">
                     <div>
-                        <h2 class="text-xl font-black tracking-tight text-white">Next up</h2>
+                        <h2 class="fluid-display font-black tracking-tight text-white">Next up</h2>
                         <p class="text-sm text-charcoal-300">Your place in line — updates live.</p>
                     </div>
                 </div>
 
                 <!-- Court selector -->
-                <div class="mb-4 flex flex-wrap gap-2">
+                <div class="mb-4 flex flex-wrap gap-3">
                     <button
                         v-for="court in courts"
                         :key="court.id"
-                        class="inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition"
+                        class="inline-flex min-h-12 items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition"
                         :class="
                             court.id === activeCourtId
                                 ? 'border-volt-300/60 bg-volt-300/15 text-volt-200'
@@ -341,10 +526,10 @@ const isMyEntry = (entry) => Array.isArray(entry?.players) && entry.players.some
                             <li
                                 v-for="entry in calledEntries"
                                 :key="entry.id"
-                                class="flex items-center gap-4 bg-volt-300/[0.07] px-4 py-3.5 sm:px-5"
+                                class="flex flex-wrap items-center gap-3 bg-volt-300/[0.07] px-4 py-3.5 sm:px-5"
                             >
                                 <span class="w-14 shrink-0 text-center">
-                                    <span class="inline-grid size-10 place-items-center rounded-full bg-volt-300/20 text-sm font-black text-volt-200 ring-1 ring-volt-300/40">
+                                    <span class="inline-grid size-11 place-items-center rounded-full bg-volt-300/20 text-sm font-black text-volt-200 ring-1 ring-volt-300/40">
                                         ON DECK
                                     </span>
                                 </span>
@@ -354,7 +539,7 @@ const isMyEntry = (entry) => Array.isArray(entry?.players) && entry.players.some
                                         <PlayerAvatar v-for="player in entry.players" :key="player.id" :player="player" />
                                     </div>
                                     <div class="min-w-0">
-                                        <p class="truncate text-sm font-semibold text-white">{{ entry.label }}</p>
+                                        <p class="break-words text-base font-semibold text-white">{{ entry.label }}</p>
                                         <p class="text-xs text-charcoal-300">
                                             {{ entry.players_count }} player{{ entry.players_count === 1 ? '' : 's' }} · headed to court
                                         </p>
@@ -368,14 +553,14 @@ const isMyEntry = (entry) => Array.isArray(entry?.players) && entry.players.some
                             <li
                                 v-for="(entry, index) in waitingEntries"
                                 :key="entry.id"
-                                class="flex items-center gap-4 px-4 py-3.5 transition hover:bg-white/[0.03] sm:px-5"
+                                class="flex flex-wrap items-center gap-3 px-4 py-3.5 transition hover:bg-white/[0.03] sm:px-5"
                             >
                                 <span class="w-14 shrink-0 text-center">
                                     <span
-                                        class="inline-grid size-10 place-items-center rounded-full text-sm font-black"
+                                        class="inline-grid size-11 place-items-center rounded-full text-sm font-black"
                                         :class="
                                             index === 0
-                                                ? 'bg-volt-300 text-navy-950 shadow-[0_4px_16px_-2px_rgb(255_214_10/0.5)]'
+                                                ? 'bg-volt-300 text-ink shadow-[0_4px_16px_-2px_rgb(255_214_10/0.5)]'
                                                 : 'bg-white/10 text-charcoal-200'
                                         "
                                     >
@@ -388,7 +573,7 @@ const isMyEntry = (entry) => Array.isArray(entry?.players) && entry.players.some
                                         <PlayerAvatar v-for="player in entry.players" :key="player.id" :player="player" />
                                     </div>
                                     <div class="min-w-0">
-                                        <p class="truncate text-sm font-semibold text-white">{{ entry.label }}</p>
+                                        <p class="break-words text-base font-semibold text-white">{{ entry.label }}</p>
                                         <p class="text-xs text-charcoal-300">
                                             {{ entry.players_count }} player{{ entry.players_count === 1 ? '' : 's' }}
                                             <span v-if="entry.group" class="text-volt-200/80">· squad</span>
@@ -396,7 +581,7 @@ const isMyEntry = (entry) => Array.isArray(entry?.players) && entry.players.some
                                     </div>
                                 </div>
 
-                                <div class="flex shrink-0 items-center gap-2">
+                                <div class="flex shrink-0 items-center gap-3">
                                     <Badge v-if="isMyEntry(entry)" color="volt" size="sm">You</Badge>
                                     <BaseButton
                                         v-if="isMyEntry(entry)"
@@ -445,11 +630,11 @@ const isMyEntry = (entry) => Array.isArray(entry?.players) && entry.players.some
 
             <!-- Step 1: play type -->
             <p class="mb-2 text-xs font-semibold uppercase tracking-wide text-charcoal-300">Play type</p>
-            <div class="mb-5 grid grid-cols-2 gap-2">
+            <div class="mb-5 grid grid-cols-2 gap-3">
                 <button
                     v-for="type in ['doubles', 'singles']"
                     :key="type"
-                    class="rounded-xl border px-4 py-3 text-left transition"
+                    class="min-h-12 rounded-xl border px-4 py-3 text-left transition"
                     :class="
                         joinType === type
                             ? 'border-volt-300/60 bg-volt-300/15'
@@ -457,7 +642,7 @@ const isMyEntry = (entry) => Array.isArray(entry?.players) && entry.players.some
                     "
                     @click="switchType(type)"
                 >
-                    <span class="block text-sm font-bold text-white capitalize">{{ type }}</span>
+                    <span class="block text-base font-bold text-white capitalize">{{ type }}</span>
                     <span class="text-xs text-charcoal-300">{{ type === 'doubles' ? '2v2 · 4 players' : '1v1 · 2 players' }}</span>
                 </button>
             </div>
@@ -468,7 +653,7 @@ const isMyEntry = (entry) => Array.isArray(entry?.players) && entry.players.some
                 <button
                     v-for="court in joinCourts"
                     :key="court.id"
-                    class="flex w-full items-center justify-between rounded-xl border px-4 py-3 text-left transition"
+                    class="flex min-h-12 w-full items-center justify-between rounded-xl border px-4 py-3 text-left transition"
                     :class="
                         joinCourtId === court.id
                             ? 'border-volt-300/60 bg-volt-300/15'
@@ -476,8 +661,8 @@ const isMyEntry = (entry) => Array.isArray(entry?.players) && entry.players.some
                     "
                     @click="selectCourt(court.id)"
                 >
-                    <span>
-                        <span class="block text-sm font-bold text-white">{{ court.name }}</span>
+                    <span class="min-w-0">
+                        <span class="block break-words text-base font-bold text-white">{{ court.name }}</span>
                         <span class="text-xs text-charcoal-300">{{ court.location }}</span>
                     </span>
                     <Badge color="gray" size="sm">{{ court.waiting_count }} waiting</Badge>
@@ -492,7 +677,7 @@ const isMyEntry = (entry) => Array.isArray(entry?.players) && entry.players.some
             <p class="mb-2 text-xs font-semibold uppercase tracking-wide text-charcoal-300">Squad</p>
             <div class="space-y-2">
                 <button
-                    class="flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition"
+                    class="flex min-h-12 w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition"
                     :class="
                         joinGroupId === null
                             ? 'border-volt-300/60 bg-volt-300/15'
@@ -501,14 +686,14 @@ const isMyEntry = (entry) => Array.isArray(entry?.players) && entry.players.some
                     @click="joinGroupId = null"
                 >
                     <PlayerAvatar :player="auth.user" />
-                    <span class="text-sm font-bold text-white">Solo — just me</span>
+                    <span class="text-base font-bold text-white">Solo — just me</span>
                     <span class="ml-auto text-xs text-charcoal-300">1 spot</span>
                 </button>
 
                 <button
                     v-for="group in groups"
                     :key="group.id"
-                    class="flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition"
+                    class="flex min-h-12 w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition"
                     :class="
                         joinGroupId === group.id
                             ? 'border-volt-300/60 bg-volt-300/15'
@@ -519,8 +704,8 @@ const isMyEntry = (entry) => Array.isArray(entry?.players) && entry.players.some
                     <div class="flex -space-x-2">
                         <PlayerAvatar v-for="player in group.players" :key="player.id" :player="player" size="sm" />
                     </div>
-                    <span class="text-sm font-bold text-white">{{ group.name }}</span>
-                    <span class="ml-auto text-xs text-charcoal-300">{{ group.players.length }} spots</span>
+                    <span class="min-w-0 flex-1 break-words text-base font-bold text-white">{{ group.name }}</span>
+                    <span class="text-xs text-charcoal-300">{{ group.players.length }} spots</span>
                 </button>
 
                 <p v-if="!groups.length" class="rounded-xl bg-white/[0.03] px-4 py-3 text-sm text-charcoal-300">

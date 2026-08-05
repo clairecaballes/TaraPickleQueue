@@ -81,7 +81,7 @@ function selectQueue(id) {
             <span class="text-xs font-bold uppercase tracking-wide text-charcoal-300">Session</span>
             <button
                 type="button"
-                class="rounded-full border px-4 py-1.5 text-sm font-semibold transition"
+                class="min-h-12 rounded-full border px-4 py-2 text-sm font-semibold transition"
                 :class="
                     selectedQueueId === null
                         ? 'border-volt-300/60 bg-volt-300/15 text-volt-200'
@@ -95,7 +95,7 @@ function selectQueue(id) {
                 v-for="queue in sortedQueues"
                 :key="queue.id"
                 type="button"
-                class="inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-sm font-semibold transition"
+                class="inline-flex min-h-12 items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition"
                 :class="
                     selectedQueueId === queue.id
                         ? 'border-volt-300/60 bg-volt-300/15 text-volt-200'
@@ -122,7 +122,7 @@ function selectQueue(id) {
                 <!-- Queue header with End Queue control -->
                 <header class="flex flex-wrap items-center gap-3 border-b border-white/10 bg-navy-950/40 px-4 py-3 sm:px-5">
                     <div class="min-w-0 flex-1">
-                        <h3 class="flex items-center gap-2 truncate text-base font-black tracking-tight text-white">
+                        <h3 class="flex flex-wrap items-center gap-2 break-words text-lg font-black leading-snug tracking-tight text-white">
                             {{ queue.name }}
                             <Badge v-if="!queue.open" color="gray" size="sm">Closed</Badge>
                             <Badge
@@ -153,56 +153,140 @@ function selectQueue(id) {
                     </BaseButton>
                 </header>
 
-                <!-- Player list -->
-                <div v-if="queue.players.length" class="overflow-x-auto">
-                    <table class="w-full min-w-[560px] text-sm">
-                        <thead>
-                            <tr class="border-b border-white/10 bg-navy-950/30 text-[10px] uppercase tracking-wider text-charcoal-400">
-                                <th class="px-4 py-2.5 text-left font-semibold">Pos</th>
-                                <th class="px-2 py-2.5 text-left font-semibold">Player</th>
-                                <th class="px-2 py-2.5 text-left font-semibold">Skill</th>
-                                <th class="px-2 py-2.5 text-left font-semibold">Status</th>
-                                <th class="px-2 py-2.5 text-right font-semibold">Record</th>
-                                <th class="px-4 py-2.5 text-right font-semibold">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-white/5">
-                            <tr
-                                v-for="player in queue.players"
-                                :key="player.id"
-                                class="transition hover:bg-white/[0.03]"
-                                :class="player.paused ? 'opacity-60' : ''"
-                            >
-                                <td class="px-4 py-2.5">
-                                    <span
-                                        v-if="isWaiting(player)"
-                                        class="inline-grid size-7 place-items-center rounded-full text-[11px] font-black"
-                                        :class="
-                                            positionOf(queue, player) === 1
-                                                ? 'bg-volt-300 text-navy-950 shadow-[0_2px_10px_-2px_rgb(255_214_10/0.5)]'
-                                                : 'bg-white/10 text-charcoal-200'
-                                        "
-                                    >
-                                        {{ positionOf(queue, player) }}
-                                    </span>
-                                    <span v-else class="text-xs font-bold text-charcoal-500">—</span>
-                                </td>
-                                <td class="px-2 py-2.5">
-                                    <div class="flex items-center gap-2.5">
-                                        <PlayerFace :player="player" size="sm" />
-                                        <div class="min-w-0">
-                                            <p class="truncate text-sm font-semibold text-white">{{ player.name }}</p>
-                                            <p class="text-[10px] text-charcoal-400">
-                                                {{ queue.name }}
-                                                <span v-if="player.fixedPairId" class="text-sky-300">· 🔗 paired</span>
-                                            </p>
+                <!-- Player list — table on wider screens, stacked rows on phones
+                     so names wrap and nothing truncates down to 320px. -->
+                <template v-if="queue.players.length">
+                    <div class="hidden overflow-x-auto md:block">
+                        <table class="w-full text-sm">
+                            <thead>
+                                <tr class="border-b border-white/10 bg-navy-950/30 text-[10px] uppercase tracking-wider text-charcoal-400">
+                                    <th class="px-4 py-2.5 text-left font-semibold">Pos</th>
+                                    <th class="px-2 py-2.5 text-left font-semibold">Player</th>
+                                    <th class="px-2 py-2.5 text-left font-semibold">Skill</th>
+                                    <th class="px-2 py-2.5 text-left font-semibold">Status</th>
+                                    <th class="px-2 py-2.5 text-right font-semibold">Record</th>
+                                    <th class="px-4 py-2.5 text-right font-semibold">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-white/5">
+                                <tr
+                                    v-for="player in queue.players"
+                                    :key="player.id"
+                                    class="transition hover:bg-white/[0.03]"
+                                    :class="player.paused ? 'opacity-60' : ''"
+                                >
+                                    <td class="px-4 py-2.5">
+                                        <span
+                                            v-if="isWaiting(player)"
+                                            class="inline-grid size-7 place-items-center rounded-full text-[11px] font-black"
+                                            :class="
+                                                positionOf(queue, player) === 1
+                                                    ? 'bg-volt-300 text-ink shadow-[0_2px_10px_-2px_rgb(255_214_10/0.5)]'
+                                                    : 'bg-white/10 text-charcoal-200'
+                                            "
+                                        >
+                                            {{ positionOf(queue, player) }}
+                                        </span>
+                                        <span v-else class="text-xs font-bold text-charcoal-500">—</span>
+                                    </td>
+                                    <td class="px-2 py-2.5">
+                                        <div class="flex items-center gap-2.5">
+                                            <PlayerFace :player="player" size="sm" />
+                                            <div class="min-w-0">
+                                                <p class="break-words text-sm font-semibold text-white">{{ player.name }}</p>
+                                                <p class="text-[10px] text-charcoal-400">
+                                                    {{ queue.name }}
+                                                    <span v-if="player.fixedPairId" class="text-sky-300">· 🔗 paired</span>
+                                                </p>
+                                            </div>
                                         </div>
+                                    </td>
+                                    <td class="px-2 py-2.5">
+                                        <SkillChip :skill="player.skill" />
+                                    </td>
+                                    <td class="px-2 py-2.5">
+                                        <span
+                                            class="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ring-1 ring-inset"
+                                            :class="playerStatus(player, queue).cls"
+                                        >
+                                            <span class="size-1.5 rounded-full" :class="playerStatus(player, queue).dot" />
+                                            {{ playerStatus(player, queue).label }}
+                                        </span>
+                                    </td>
+                                    <td class="px-2 py-2.5 text-right">
+                                        <span class="text-xs font-bold text-white">{{ player.wins }}W</span>
+                                        <span class="text-xs text-charcoal-400"> · {{ player.gamesPlayed }}G</span>
+                                    </td>
+                                    <td class="px-4 py-2.5">
+                                        <div class="flex items-center justify-end gap-3">
+                                            <button
+                                                class="grid size-12 place-items-center rounded-full transition"
+                                                :class="
+                                                    player.paused
+                                                        ? 'bg-volt-300/15 text-volt-200 ring-1 ring-volt-300/40'
+                                                        : 'text-charcoal-500 hover:bg-volt-300/10 hover:text-volt-200'
+                                                "
+                                                :title="player.paused ? `Resume ${player.name}` : `Pause ${player.name}`"
+                                                :disabled="!isWaiting(player)"
+                                                @click="togglePause(queue, player)"
+                                            >
+                                                <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                    <path v-if="player.paused" stroke-linecap="round" stroke-linejoin="round" d="M12 8v5l3 2" />
+                                                    <circle v-else-if="!player.paused" cx="12" cy="12" r="9" />
+                                                    <path v-else stroke-linecap="round" d="M12 7v5l3 2" />
+                                                </svg>
+                                            </button>
+                                            <button
+                                                v-if="isWaiting(player)"
+                                                class="grid size-12 place-items-center rounded-full text-charcoal-500 transition hover:bg-red-400/10 hover:text-red-300"
+                                                title="Remove from queue"
+                                                :disabled="!isWaiting(player)"
+                                                @click="remove(queue, player)"
+                                            >
+                                                <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                    <path stroke-linecap="round" d="M6 6l12 12M18 6L6 18" />
+                                                </svg>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Mobile card rows (below 768px) -->
+                    <ul class="divide-y divide-white/5 md:hidden">
+                        <li
+                            v-for="player in queue.players"
+                            :key="player.id"
+                            class="flex flex-wrap items-center gap-3 px-4 py-3"
+                            :class="player.paused ? 'opacity-60' : ''"
+                        >
+                            <span
+                                v-if="isWaiting(player)"
+                                class="grid size-11 shrink-0 place-items-center rounded-full text-sm font-black"
+                                :class="
+                                    positionOf(queue, player) === 1
+                                        ? 'bg-volt-300 text-ink shadow-[0_2px_10px_-2px_rgb(255_214_10/0.5)]'
+                                        : 'bg-white/10 text-charcoal-200'
+                                "
+                            >
+                                {{ positionOf(queue, player) }}
+                            </span>
+                            <span v-else class="grid size-11 shrink-0 place-items-center rounded-full text-sm font-bold text-charcoal-500">—</span>
+
+                            <div class="min-w-0 flex-1">
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <PlayerFace :player="player" size="sm" />
+                                    <div class="min-w-0">
+                                        <p class="break-words text-base font-semibold text-white">{{ player.name }}</p>
+                                        <p class="break-words text-[11px] text-charcoal-400">
+                                            {{ queue.name }}
+                                            <span v-if="player.fixedPairId" class="text-sky-300">· 🔗 paired</span>
+                                        </p>
                                     </div>
-                                </td>
-                                <td class="px-2 py-2.5">
-                                    <SkillChip :skill="player.skill" />
-                                </td>
-                                <td class="px-2 py-2.5">
+                                </div>
+                                <div class="mt-2 flex flex-wrap items-center gap-2">
                                     <span
                                         class="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ring-1 ring-inset"
                                         :class="playerStatus(player, queue).cls"
@@ -210,47 +294,44 @@ function selectQueue(id) {
                                         <span class="size-1.5 rounded-full" :class="playerStatus(player, queue).dot" />
                                         {{ playerStatus(player, queue).label }}
                                     </span>
-                                </td>
-                                <td class="px-2 py-2.5 text-right">
-                                    <span class="text-xs font-bold text-white">{{ player.wins }}W</span>
-                                    <span class="text-xs text-charcoal-400"> · {{ player.gamesPlayed }}G</span>
-                                </td>
-                                <td class="px-4 py-2.5">
-                                    <div class="flex items-center justify-end gap-1">
-                                        <button
-                                            class="rounded-full p-2 transition"
-                                            :class="
-                                                player.paused
-                                                    ? 'bg-volt-300/15 text-volt-200 ring-1 ring-volt-300/40'
-                                                    : 'text-charcoal-500 hover:bg-volt-300/10 hover:text-volt-200'
-                                            "
-                                            :title="player.paused ? `Resume ${player.name}` : `Pause ${player.name}`"
-                                            :disabled="!isWaiting(player)"
-                                            @click="togglePause(queue, player)"
-                                        >
-                                            <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                <path v-if="player.paused" stroke-linecap="round" stroke-linejoin="round" d="M12 8v5l3 2" />
-                                                <circle v-else-if="!player.paused" cx="12" cy="12" r="9" />
-                                                <path v-else stroke-linecap="round" d="M12 7v5l3 2" />
-                                            </svg>
-                                        </button>
-                                        <button
-                                            v-if="isWaiting(player)"
-                                            class="rounded-full p-2 text-charcoal-500 transition hover:bg-red-400/10 hover:text-red-300"
-                                            title="Remove from queue"
-                                            :disabled="!isWaiting(player)"
-                                            @click="remove(queue, player)"
-                                        >
-                                            <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                <path stroke-linecap="round" d="M6 6l12 12M18 6L6 18" />
-                                            </svg>
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+                                    <SkillChip :skill="player.skill" />
+                                    <span class="ml-auto text-xs font-bold text-white">{{ player.wins }}W · {{ player.gamesPlayed }}G</span>
+                                </div>
+                            </div>
+
+                            <div class="flex shrink-0 items-center gap-3">
+                                <button
+                                    class="grid size-12 place-items-center rounded-full transition"
+                                    :class="
+                                        player.paused
+                                            ? 'bg-volt-300/15 text-volt-200 ring-1 ring-volt-300/40'
+                                            : 'text-charcoal-500 hover:bg-volt-300/10 hover:text-volt-200'
+                                    "
+                                    :title="player.paused ? `Resume ${player.name}` : `Pause ${player.name}`"
+                                    :disabled="!isWaiting(player)"
+                                    @click="togglePause(queue, player)"
+                                >
+                                    <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path v-if="player.paused" stroke-linecap="round" stroke-linejoin="round" d="M12 8v5l3 2" />
+                                        <circle v-else-if="!player.paused" cx="12" cy="12" r="9" />
+                                        <path v-else stroke-linecap="round" d="M12 7v5l3 2" />
+                                    </svg>
+                                </button>
+                                <button
+                                    v-if="isWaiting(player)"
+                                    class="grid size-12 place-items-center rounded-full text-charcoal-500 transition hover:bg-red-400/10 hover:text-red-300"
+                                    title="Remove from queue"
+                                    :disabled="!isWaiting(player)"
+                                    @click="remove(queue, player)"
+                                >
+                                    <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" d="M6 6l12 12M18 6L6 18" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </li>
+                    </ul>
+                </template>
 
                 <p v-else class="px-5 py-10 text-center text-sm text-charcoal-300">
                     No players in {{ queue.name }} yet — add some from the Queues tab.

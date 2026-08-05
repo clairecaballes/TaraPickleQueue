@@ -66,7 +66,7 @@ function enter() {
                 <span
                     v-for="(spot, d) in dotSpots"
                     :key="d"
-                    class="absolute size-[13%] rounded-full bg-navy-950/70"
+                    class="pickle-dot absolute size-[13%] rounded-full bg-navy-950/70"
                     :style="spot"
                 />
             </span>
@@ -93,7 +93,7 @@ function enter() {
             <div class="animate-rise mt-10 [animation-delay:320ms]">
                 <button
                     type="button"
-                    class="animate-pulse-ring group inline-flex items-center gap-3 rounded-full bg-volt-300 px-10 py-4 text-lg font-black text-navy-950 transition-all duration-200 hover:scale-105 hover:bg-volt-200 active:scale-95"
+                    class="animate-pulse-ring group inline-flex min-h-12 items-center gap-3 rounded-full bg-volt-300 px-10 py-4 text-lg font-black text-ink transition-all duration-200 hover:scale-105 hover:bg-volt-200 active:scale-95"
                     @click="enter"
                 >
                     Let's Play

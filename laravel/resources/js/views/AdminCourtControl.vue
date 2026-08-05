@@ -13,12 +13,20 @@ import PlayerAvatar from '../components/ui/PlayerAvatar.vue';
 import { useAuthStore } from '../stores/auth';
 import { useQueueStore } from '../stores/queue';
 import { ordinal } from '../utils/format';
+import { getTheme, toggleTheme } from '../utils/theme';
 
 const auth = useAuthStore();
 const queue = useQueueStore();
 const router = useRouter();
 
 const { courts, activeCourtId, waitingEntries, calledEntries } = storeToRefs(queue);
+
+/** Outdoor Daylight high-contrast toggle. */
+const daylight = ref(getTheme() === 'daylight');
+
+function toggleThemeMode() {
+    daylight.value = toggleTheme() === 'daylight';
+}
 
 const busy = ref(false);
 const error = ref('');
@@ -255,12 +263,12 @@ function selectCourt(courtId) {
             <div class="mx-auto flex max-w-6xl items-center justify-between px-4 py-3.5">
                 <div class="flex items-center gap-2.5">
                     <button
-                        class="grid size-9 place-items-center rounded-xl bg-volt-300"
+                        class="grid size-12 place-items-center rounded-xl bg-volt-300"
                         title="Back to dashboard"
                         aria-label="Back to dashboard"
                         @click="router.push('/')"
                     >
-                        <svg class="size-5 text-navy-950" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <svg class="size-5 text-ink" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
                         </svg>
                     </button>
@@ -272,23 +280,46 @@ function selectCourt(courtId) {
 
                 <div class="flex items-center gap-3">
                     <Badge color="volt" size="sm" dot>Admin</Badge>
+
+                    <!-- Outdoor Daylight toggle -->
                     <button
-                        class="inline-flex items-center gap-1.5 rounded-full border border-white/10 px-3 py-1.5 text-xs font-semibold text-charcoal-200 transition hover:border-volt-300/40 hover:text-volt-200"
+                        class="grid size-12 place-items-center rounded-full transition"
+                        :class="
+                            daylight
+                                ? 'bg-volt-300/15 text-volt-200 ring-1 ring-volt-300/40'
+                                : 'text-charcoal-300 hover:bg-white/10 hover:text-white'
+                        "
+                        :title="daylight ? 'Switch to dark theme' : 'Switch to Outdoor Daylight (high contrast)'"
+                        aria-label="Toggle Outdoor Daylight theme"
+                        :aria-pressed="daylight"
+                        @click="toggleThemeMode"
+                    >
+                        <svg v-if="daylight" class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="4" />
+                            <path stroke-linecap="round" d="M12 2v2m0 16v2M4.9 4.9l1.4 1.4m11.4 11.4l1.4 1.4M2 12h2m16 0h2M4.9 19.1l1.4-1.4m11.4-11.4l1.4-1.4" />
+                        </svg>
+                        <svg v-else class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.36 6.36l-.7-.7M6.34 6.34l-.7-.7m12.72 0l-.7.7M6.34 17.66l-.7.7M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                        </svg>
+                    </button>
+
+                    <button
+                        class="inline-flex min-h-12 items-center gap-1.5 rounded-full border border-white/10 px-4 py-2 text-sm font-semibold text-charcoal-200 transition hover:border-volt-300/40 hover:text-volt-200"
                         @click="router.push('/admin/analytics')"
                     >
-                        <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M6 20h12M8 16h8M9 12h6M10 8h4M12 4v16" />
                         </svg>
                         Analytics
                     </button>
                     <PlayerAvatar :player="auth.user" size="sm" />
                     <button
-                        class="rounded-full p-2 text-charcoal-300 transition hover:bg-white/10 hover:text-white"
+                        class="grid size-12 place-items-center rounded-full text-charcoal-300 transition hover:bg-white/10 hover:text-white"
                         title="Sign out"
                         aria-label="Sign out"
                         @click="logout"
                     >
-                        <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M15 12H3m0 0l4-4m-4 4l4 4M10 5V3h10v18H10v-2" />
                         </svg>
                     </button>
@@ -322,7 +353,7 @@ function selectCourt(courtId) {
                 <button
                     v-for="court in courts"
                     :key="court.id"
-                    class="inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition"
+                    class="inline-flex min-h-12 items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition"
                     :class="
                         court.id === activeCourtId
                             ? 'border-volt-300/60 bg-volt-300/15 text-volt-200'
@@ -421,7 +452,7 @@ function selectCourt(courtId) {
                                     <PlayerAvatar v-for="player in entry.players" :key="player.id" :player="player" size="sm" />
                                 </div>
                                 <div class="min-w-0 flex-1">
-                                    <p class="truncate text-sm font-semibold text-white">{{ entry.label }}</p>
+                                    <p class="break-words text-base font-semibold text-white">{{ entry.label }}</p>
                                     <p class="text-xs text-charcoal-300">{{ entry.players_count }} players</p>
                                 </div>
                                 <Badge color="volt" size="sm" dot>Called</Badge>
@@ -471,8 +502,8 @@ function selectCourt(courtId) {
                                 </svg>
 
                                 <span
-                                    class="inline-grid size-9 shrink-0 place-items-center rounded-full text-xs font-black"
-                                    :class="index === 0 ? 'bg-volt-300 text-navy-950' : 'bg-white/10 text-charcoal-200'"
+                                    class="inline-grid size-11 shrink-0 place-items-center rounded-full text-sm font-black"
+                                    :class="index === 0 ? 'bg-volt-300 text-ink' : 'bg-white/10 text-charcoal-200'"
                                 >
                                     {{ ordinal(index) }}
                                 </span>
@@ -482,7 +513,7 @@ function selectCourt(courtId) {
                                 </div>
 
                                 <div class="min-w-0 flex-1">
-                                    <p class="truncate text-sm font-semibold text-white">{{ entry.label }}</p>
+                                    <p class="break-words text-base font-semibold text-white">{{ entry.label }}</p>
                                     <p class="text-xs text-charcoal-300">{{ entry.players_count }} players</p>
                                 </div>
 
@@ -586,7 +617,7 @@ function selectCourt(courtId) {
                     >
                         <PlayerAvatar :player="user" />
                         <span class="min-w-0 flex-1">
-                            <span class="block truncate text-sm font-bold text-white">{{ user.name }}</span>
+                            <span class="block break-words text-base font-bold text-white">{{ user.name }}</span>
                             <span class="block text-xs text-charcoal-300">{{ user.phone || user.email }}</span>
                         </span>
                         <Badge v-if="user.skill_rating != null" color="navy" size="sm">{{ user.skill_rating.toFixed(1) }}</Badge>

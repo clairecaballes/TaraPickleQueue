@@ -68,7 +68,7 @@ onBeforeUnmount(() => {
                             >
                                 <h2 class="text-lg font-bold text-white">{{ title }}</h2>
                                 <button
-                                    class="grid size-8 place-items-center rounded-full text-charcoal-300 transition hover:bg-white/10 hover:text-white"
+                                    class="grid size-12 place-items-center rounded-full text-charcoal-300 transition hover:bg-white/10 hover:text-white"
                                     aria-label="Close"
                                     @click="close"
                                 >

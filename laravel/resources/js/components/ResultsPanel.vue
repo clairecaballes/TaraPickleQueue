@@ -1,12 +1,12 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 
 import { useTarapickleStore } from '../stores/tarapickle';
 import { downloadBlob, downloadDataUrl, toCsv } from '../utils/format';
 import PlayerFace from './PlayerFace.vue';
+import StoryLeaderboardModal from './StoryLeaderboardModal.vue';
 import Badge from './ui/Badge.vue';
 import BaseButton from './ui/BaseButton.vue';
-import SkillChip from './ui/SkillChip.vue';
 
 const emit = defineEmits(['toast']);
 
@@ -33,9 +33,10 @@ const totalMatches = computed(() =>
 );
 
 function rankClass(rank) {
-    if (rank === 1) return 'bg-volt-300 text-navy-950 shadow-[0_2px_10px_-2px_rgb(255_214_10/0.6)]';
-    if (rank === 2) return 'bg-charcoal-200 text-navy-950';
-    if (rank === 3) return 'bg-amber-500 text-navy-950';
+    // Rank 2 uses a constant silver so it stays legible in both themes.
+    if (rank === 1) return 'bg-volt-300 text-ink shadow-[0_2px_10px_-2px_rgb(255_214_10/0.6)]';
+    if (rank === 2) return 'bg-[#d0d0d4] text-ink';
+    if (rank === 3) return 'bg-amber-500 text-ink';
     return 'bg-white/10 text-charcoal-300';
 }
 
@@ -50,12 +51,11 @@ function exportCsv() {
     }
 
     const csv = toCsv(
-        ['Rank', 'Player', 'Queue', 'Skill', 'Wins', 'Games', 'Win %'],
+        ['Rank', 'Player', 'Queue', 'Wins', 'Games', 'Win %'],
         rows.value.map((row) => [
             row.rank,
             row.name,
             row.queueName,
-            row.skill ?? '',
             row.wins,
             row.gamesPlayed,
             `${winRate(row)}%`,
@@ -73,7 +73,6 @@ const COLUMNS = [
     { label: 'Rank', x: 56, align: 'left' },
     { label: 'Player', x: 150, align: 'left' },
     { label: 'Queue', x: 470, align: 'left' },
-    { label: 'Skill', x: 690, align: 'left' },
     { label: 'W', x: 850, align: 'right' },
     { label: 'G', x: 910, align: 'right' },
     { label: 'Win %', x: 980, align: 'right' },
@@ -181,10 +180,6 @@ function exportPng() {
         ctx.font = '500 14px "Instrument Sans", sans-serif';
         ctx.fillText(truncateText(ctx, row.queueName, 200), COLUMNS[2].x, y + 30);
 
-        ctx.fillStyle = row.skill === 'Advanced' ? '#fbbf24' : row.skill === 'Beginner' ? '#34d399' : row.skill ? '#ffd60a' : '#8b8b95';
-        ctx.textAlign = 'left';
-        ctx.fillText(row.skill ?? '—', COLUMNS[3].x, y + 30);
-
         ctx.fillStyle = '#ffd60a';
         ctx.font = '800 15px "Instrument Sans", sans-serif';
         ctx.textAlign = 'right';
@@ -205,6 +200,21 @@ function exportPng() {
 
     downloadDataUrl(canvas.toDataURL('image/png'), 'tarapickle-results.png');
     emit('toast', 'Results downloaded as PNG 🎉');
+}
+
+/* ------------------------------------------------------------------ *
+ * 9:16 Instagram Story leaderboard (html-to-image export)
+ * ------------------------------------------------------------------ */
+const storyOpen = ref(false);
+
+function openStory() {
+    if (!rows.value.length) {
+        emit('toast', 'No standings to share yet — play a few matches first.');
+
+        return;
+    }
+
+    storyOpen.value = true;
 }
 
 /* ------------------------------------------------------------------ *
@@ -274,23 +284,44 @@ async function shareResults() {
                 </svg>
                 Share
             </BaseButton>
+
+            <BaseButton variant="secondary" size="sm" @click="openStory">
+                <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="18" height="18" rx="4" />
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 8.5v7M8.5 12h7" />
+                </svg>
+                Story
+            </BaseButton>
         </section>
 
-        <!-- Leaderboard -->
-        <section class="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] shadow-card">
-            <div class="flex items-center justify-between border-b border-white/10 bg-navy-950/40 px-4 py-3 sm:px-5">
-                <h3 class="text-sm font-black tracking-tight text-white">🏆 Overall leaderboard</h3>
-                <Badge color="volt" size="sm">{{ rows.length }} ranked</Badge>
+        <!-- Leaderboard — portrait-friendly share card (max 430px wide on phones) -->
+        <section
+            class="mx-auto w-full max-w-[430px] overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] shadow-card sm:max-w-full"
+        >
+            <!-- Share-card banner: title + timestamp for clean screenshots -->
+            <div class="border-b border-white/10 bg-navy-950/40 px-4 py-4 sm:px-5">
+                <div class="flex items-center gap-2.5">
+                    <span class="grid size-9 shrink-0 place-items-center rounded-xl bg-volt-300 text-xl">🏆</span>
+                    <div class="min-w-0">
+                        <h3 class="fluid-display break-words font-black tracking-tight text-white">
+                            Court Leaderboard
+                        </h3>
+                        <p class="break-words text-xs text-charcoal-400">
+                            {{ new Date().toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' }) }}
+                            · {{ new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) }}
+                            · {{ rows.length }} ranked · {{ totalMatches }} games
+                        </p>
+                    </div>
+                </div>
             </div>
 
             <div class="overflow-x-auto">
-                <table v-if="rows.length" class="w-full min-w-[640px] text-sm">
+                <table v-if="rows.length" class="w-full text-sm">
                     <thead>
                         <tr class="border-b border-white/10 bg-navy-950/30 text-[10px] uppercase tracking-wider text-charcoal-400">
                             <th class="px-4 py-2.5 text-left font-semibold">#</th>
                             <th class="px-2 py-2.5 text-left font-semibold">Player</th>
                             <th class="px-2 py-2.5 text-left font-semibold">Queue</th>
-                            <th class="px-2 py-2.5 text-left font-semibold">Skill</th>
                             <th class="px-2 py-2.5 text-right font-semibold">Wins</th>
                             <th class="px-2 py-2.5 text-right font-semibold">Games</th>
                             <th class="px-4 py-2.5 text-right font-semibold">Win %</th>
@@ -313,11 +344,10 @@ async function shareResults() {
                             <td class="px-2 py-2.5">
                                 <div class="flex items-center gap-2.5">
                                     <PlayerFace :player="row" size="sm" />
-                                    <span class="truncate text-sm font-semibold text-white">{{ row.name }}</span>
+                                    <span class="min-w-0 break-words text-sm font-semibold text-white">{{ row.name }}</span>
                                 </div>
                             </td>
                             <td class="px-2 py-2.5 text-xs text-charcoal-300">{{ row.queueName }}</td>
-                            <td class="px-2 py-2.5"><SkillChip :skill="row.skill" /></td>
                             <td class="px-2 py-2.5 text-right font-black text-volt-300">{{ row.wins }}</td>
                             <td class="px-2 py-2.5 text-right text-xs text-charcoal-300">{{ row.gamesPlayed }}</td>
                             <td class="px-4 py-2.5 text-right">
@@ -338,5 +368,7 @@ async function shareResults() {
             </div>
         </section>
 
+        <!-- 9:16 Instagram Story leaderboard -->
+        <StoryLeaderboardModal v-model="storyOpen" :rows="rows" :total-matches="totalMatches" @toast="(message) => emit('toast', message)" />
     </div>
 </template>
